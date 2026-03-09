@@ -1,10 +1,14 @@
 <?php
 
+use App\Http\Controllers\Api\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 
-// LaunchPoint Routes
-Route::prefix('api')->group(function () {
-    Route::get('profile', [\App\Http\Controllers\Api\ProfileController::class, 'index']);
-    Route::get('settings', [\App\Http\Controllers\Api\SettingsController::class, 'index']);
-    Route::post('login', [\App\Http\Controllers\Api\AuthController::class, 'login']);
-});
+Route::prefix('v1')
+    ->group(function () {
+          ## ------------------ AUTH ROUTES ------------------ ##
+        Route::controller(AuthController::class)->middleware('guest')->group(function () {
+            Route::post('/register', 'register');
+            Route::post('/verify-otp', 'verifyOtp');
+            Route::post('/resend-otp', 'resendOtp');
+            Route::post('/login', 'login');
+        });
