@@ -22,7 +22,7 @@ class LaunchPointServiceProvider extends ServiceProvider
         $traitPath = app_path('Traits/ApiResponseTrait.php');
         if (!File::exists($traitPath)) {
             File::ensureDirectoryExists(app_path('Traits'));
-            File::put($traitPath, file_get_contents(__DIR__ . '/../../../../../stubs/ApiResponseTrait.php'));
+            File::put($traitPath, file_get_contents(__DIR__ . '/../stubs/ApiResponseTrait.stub'));
         }
 
         $controllers = ['SettingsController', 'AuthController', 'ProfileController'];
