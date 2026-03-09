@@ -1,0 +1,27 @@
+<?php
+
+namespace App\Traits;
+
+use Illuminate\Http\JsonResponse;
+
+trait ApiResponseTrait
+{
+    public function sendResponse(array $options = []): JsonResponse
+    {
+        $code = $options['code'] ?? 200;
+        $message = $options['message'] ?? null;
+        $data = $options['data'] ?? null;
+        $pagination = $options['pagination'] ?? null;
+        $response = [
+            'code' => $code,
+            'message' => $message,
+            'data' => $data,
+        ];
+
+        if ($pagination) {
+            $response['pagination'] = $pagination;
+        }
+
+        return response()->json($response, $code);
+    }
+}
