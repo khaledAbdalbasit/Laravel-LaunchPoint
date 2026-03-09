@@ -17,8 +17,9 @@ class LaunchPointServiceProvider extends ServiceProvider
     {
         // Publish config
         $this->publishes([
-            __DIR__ . '/../config/launchpoint.php' => config_path('launchpoint.php'),
+            __DIR__ . '/../../config/launchpoint.php' => config_path('launchpoint.php'),
         ], 'config');
+
 
         // Publish ApiResponse Trait
         $traitPath = app_path('Traits/ApiResponseTrait.php');
