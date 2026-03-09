@@ -2,20 +2,26 @@
     "name": "khaledabdalbasit/launchpoint",
     "description": "Laravel Starter Kit for API with Global Exception & ApiResponse Trait",
     "type": "library",
-    "autoload": {
-        "psr-4": {
-            "KhaledAbdalbasit\\LaunchPoint\\": "src/"
-        }
-    },
     "extra": {
         "laravel": {
             "providers": [
                 "KhaledAbdalbasit\\LaunchPoint\\Providers\\LaunchPointServiceProvider"
             ]
+        },
+        "branch-alias": {
+            "dev-main": "1.0-dev"
         }
     },
-    "require": {
-        "php": "^8.2",
-        "laravel/framework": "^12.0"
+    "autoload": {
+        "psr-4": {
+            "KhaledAbdalbasit\\LaunchPoint\\": "src/"
+        },
+        "files": [
+            "src/stubs/ApiResponseTrait.stub",
+            "src/stubs/SettingsController.stub",
+            "src/stubs/AuthController.stub",
+            "src/stubs/ProfileController.stub",
+            "src/stubs/handler_renderable.stub"
+        ]
     }
 }
