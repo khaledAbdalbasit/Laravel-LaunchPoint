@@ -14,7 +14,7 @@ class LaunchPointServiceProvider extends ServiceProvider
 
     public function boot()
     {
-        
+
         $this->publishes([
             __DIR__ . '/../../config/launchpoint.php' => config_path('launchpoint.php'),
         ], 'config');
@@ -22,7 +22,7 @@ class LaunchPointServiceProvider extends ServiceProvider
         $traitPath = app_path('Traits/ApiResponseTrait.php');
         if (!File::exists($traitPath)) {
             File::ensureDirectoryExists(app_path('Traits'));
-            File::put($traitPath, file_get_contents(__DIR__ . '/../stubs/ApiResponseTrait.stub'));
+            File::put($traitPath, file_get_contents(__DIR__ . '/../../../../../stubs/ApiResponseTrait.php'));
         }
 
         $controllers = ['SettingsController', 'AuthController', 'ProfileController'];
