@@ -15,13 +15,6 @@
     "autoload": {
         "psr-4": {
             "KhaledAbdalbasit\\LaunchPoint\\": "src/"
-        },
-        "files": [
-            "src/stubs/ApiResponseTrait.stub",
-            "src/stubs/SettingsController.stub",
-            "src/stubs/AuthController.stub",
-            "src/stubs/ProfileController.stub",
-            "src/stubs/handler_renderable.stub"
-        ]
+        }
     }
 }
