@@ -20,7 +20,7 @@ class LaunchPointServiceProvider extends ServiceProvider
         ], 'config');
 
         // 2. نشر ApiResponse Trait (تعديل المسار لاستخدام __DIR__)
-        $traitPath = app_path('Traits/ApiResponseTrait.stub');
+        $traitPath = app_path('Traits/ApiResponseTrait.php');
         if (!File::exists($traitPath)) {
             File::ensureDirectoryExists(app_path('Traits'));
             // المسار الآن نسبي بالنسبة لملف الـ Provider الحالي
