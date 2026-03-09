@@ -14,6 +14,7 @@ class LaunchPointServiceProvider extends ServiceProvider
 
     public function boot()
     {
+        
         $this->publishes([
             __DIR__ . '/../../config/launchpoint.php' => config_path('launchpoint.php'),
         ], 'config');
