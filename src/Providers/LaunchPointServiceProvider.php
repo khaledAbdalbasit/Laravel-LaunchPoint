@@ -10,7 +10,7 @@ class LaunchPointServiceProvider extends ServiceProvider
     public function register()
     {
         // Merge config from package
-        $this->mergeConfigFrom(__DIR__ . '/../config/launchpoint.php', 'launchpoint');
+        $this->mergeConfigFrom(__DIR__ . '/../../config/launchpoint.php', 'launchpoint');
     }
 
     public function boot()
@@ -20,14 +20,13 @@ class LaunchPointServiceProvider extends ServiceProvider
             __DIR__ . '/../../config/launchpoint.php' => config_path('launchpoint.php'),
         ], 'config');
 
-
         // Publish ApiResponse Trait
         $traitPath = app_path('Traits/ApiResponseTrait.php');
         if (!File::exists($traitPath)) {
             File::ensureDirectoryExists(app_path('Traits'));
             File::put(
                 $traitPath,
-                file_get_contents(__DIR__ . '/../stubs/ApiResponseTrait.stub')
+                file_get_contents(base_path('vendor/khaledabdalbasit/launchpoint/stubs/ApiResponseTrait.stub'))
             );
         }
 
@@ -39,7 +38,7 @@ class LaunchPointServiceProvider extends ServiceProvider
                 File::ensureDirectoryExists(app_path('Http/Controllers/Api'));
                 File::put(
                     $controllerPath,
-                    file_get_contents(__DIR__ . "/../stubs/{$controller}.stub")
+                    file_get_contents(base_path("vendor/khaledabdalbasit/launchpoint/stubs/{$controller}.stub"))
                 );
             }
         }
@@ -49,7 +48,7 @@ class LaunchPointServiceProvider extends ServiceProvider
         if (!str_contains(file_get_contents($routesPath), 'LaunchPoint Routes')) {
             File::append(
                 $routesPath,
-                file_get_contents(__DIR__ . '/../stubs/api_routes.stub')
+                file_get_contents(base_path('vendor/khaledabdalbasit/launchpoint/stubs/api_routes.stub'))
             );
         }
 
@@ -58,7 +57,7 @@ class LaunchPointServiceProvider extends ServiceProvider
         if (File::exists($handlerPath)) {
             $content = File::get($handlerPath);
             if (!str_contains($content, 'LaunchPoint Exception Handling')) {
-                $renderable = __DIR__ . '/../stubs/handler_renderable.stub';
+                $renderable = base_path('vendor/khaledabdalbasit/launchpoint/stubs/handler_renderable.stub');
                 if (File::exists($renderable)) {
                     $renderableContent = file_get_contents($renderable);
                     $content = str_replace('// register renderable here', $renderableContent, $content);
