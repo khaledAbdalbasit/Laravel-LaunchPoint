@@ -5,6 +5,11 @@ namespace KhaledAbdalbasit\LaunchPoint\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\File;
 
+/**
+ * Class LaunchPointServiceProvider
+ * * Responsible for bootstrapping the LaunchPoint package components,
+ * including authentication systems, helpers, and exception handling.
+ */
 class LaunchPointServiceProvider extends ServiceProvider
 {
     /**
@@ -24,7 +29,7 @@ class LaunchPointServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        // Register assets for manual publishing
+        // Register assets for manual publishing via artisan
         $this->registerPublishables();
 
         // Automatic generation of core components
@@ -32,13 +37,13 @@ class LaunchPointServiceProvider extends ServiceProvider
         $this->publishHelpers();
         $this->publishAuthSystem();
 
-        // Inject application hooks
+        // Inject application hooks and custom configurations
         $this->appendApiRoutes();
         $this->updateExceptionHandler();
     }
 
     /**
-     * Define files available for manual publishing via artisan vendor:publish.
+     * Define files available for manual publishing.
      *
      * @return void
      */
@@ -85,16 +90,23 @@ class LaunchPointServiceProvider extends ServiceProvider
     }
 
     /**
-     * Deploy the authentication boilerplate (Controller, Service, Repository).
+     * Deploy the authentication boilerplate in the specified directories.
      *
      * @return void
      */
     protected function publishAuthSystem()
     {
         $map = [
+            // Controllers
             'AuthController.stub' => app_path('Http/Controllers/Api/Auth/AuthController.php'),
+
+            // Services & Repositories
             'AuthService.stub' => app_path('Services/Api/Auth/AuthService.php'),
             'AuthRepository.stub' => app_path('Repositories/Api/Auth/AuthRepository.php'),
+
+            // Requests (As per your specific directory requirements)
+            'RegisterRequest.stub' => app_path('Http/Requests/Auth/RegisterRequest.php'),
+            'LoginRequest.stub' => app_path('Http/Requests/Api/LoginRequest.php'),
         ];
 
         foreach ($map as $stubName => $destPath) {
@@ -102,13 +114,14 @@ class LaunchPointServiceProvider extends ServiceProvider
             $namespace = $this->resolveNamespace($destPath);
 
             $this->generateFile($stubPath, $destPath, [
-                '{{namespace}}' => $namespace
+                '{{namespace}}' => $namespace,
+                '{{trait_namespace}}' => 'App\Traits'
             ]);
         }
     }
 
     /**
-     * Append package routes to the application's api.php file.
+     * Append package routes to the host application's api.php file.
      *
      * @return void
      */
@@ -126,7 +139,7 @@ class LaunchPointServiceProvider extends ServiceProvider
     }
 
     /**
-     * Inject custom exception handling into the App Handler.
+     * Inject custom exception handling logic into the application's Handler.
      *
      * @return void
      */
@@ -146,7 +159,7 @@ class LaunchPointServiceProvider extends ServiceProvider
     }
 
     /**
-     * Internal helper to generate files from stubs with variable replacement.
+     * Internal helper for file generation and dynamic replacement.
      *
      * @param string $stubPath
      * @param string $destPath
@@ -168,7 +181,7 @@ class LaunchPointServiceProvider extends ServiceProvider
     }
 
     /**
-     * Resolve the PSR-4 namespace based on the directory structure.
+     * Resolve the PSR-4 namespace based on the absolute file path.
      *
      * @param string $path
      * @return string
