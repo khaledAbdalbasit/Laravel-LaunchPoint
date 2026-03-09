@@ -1,0 +1,99 @@
+<?php
+
+namespace {{namespace}};
+
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use RuntimeException;
+
+class FileHelper
+{
+    protected static string $disk = 'public';
+
+    protected static int $maxSize = 128 * 1024 * 1024; // 128MB
+
+    protected static array $allowedExtensions = [
+        'jpg','jpeg','png','gif','webp',
+        'pdf','doc','docx','xls','xlsx',
+        'ppt','pptx','zip','rar',
+        'mp4','mov','avi','wmv',
+        'mp3','m4a','wav'
+    ];
+
+    protected static array $allowedMimes = [
+        'image/jpeg','image/png','image/gif','image/webp',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'application/zip',
+        'audio/mpeg','audio/wav',
+        'video/mp4','video/quicktime'
+    ];
+
+    protected static function cleanPath(string $path): string
+    {
+        return trim(preg_replace('/[\/\\\\]+/', '/', $path), '/ ');
+    }
+
+    /**
+     * Upload a file and return the stored path.
+     */
+    public static function upload(UploadedFile $file, string $folder, ?string $oldPath = null): string
+    {
+        self::validate($file);
+
+        $folder = self::cleanPath($folder);
+        $extension = strtolower($file->getClientOriginalExtension());
+        $fileName = time().'_'.Str::uuid().'.'.$extension;
+
+        $storedPath = $file->storeAs($folder, $fileName, self::$disk);
+
+        if (!$storedPath) {
+            throw new RuntimeException('File upload failed.');
+        }
+
+        if ($oldPath) {
+            self::delete($oldPath);
+        }
+
+        return $storedPath;
+    }
+
+    protected static function validate(UploadedFile $file): void
+    {
+        if ($file->getSize() > self::$maxSize) {
+            throw ValidationException::withMessages(['file' => 'File size exceeds limit.']);
+        }
+
+        $extension = strtolower($file->getClientOriginalExtension());
+        if (!in_array($extension, self::$allowedExtensions)) {
+            throw ValidationException::withMessages(['file' => 'Unsupported file extension.']);
+        }
+
+        $mime = $file->getMimeType();
+        if (!in_array($mime, self::$allowedMimes)) {
+            throw ValidationException::withMessages(['file' => 'Unsupported file type.']);
+        }
+    }
+
+    public static function delete(?string $path): bool
+    {
+        if (!$path) return false;
+        $path = self::cleanPath($path);
+        return Storage::disk(self::$disk)->exists($path)
+            ? Storage::disk(self::$disk)->delete($path)
+            : false;
+    }
+
+    public static function url(?string $path): ?string
+    {
+        if (!$path) return null;
+        return Storage::disk(self::$disk)->url(self::cleanPath($path));
+    }
+}
