@@ -1,14 +1,13 @@
-<?php
+## ------------------ LAUNCHPOINT AUTH ROUTES ------------------ ##
+Route::prefix('v1')->group(function () {
+    Route::controller(\App\Http\Controllers\Api\Auth\AuthController::class)->group(function () {
+        Route::post('/register', 'register');
+        Route::post('/verify-otp', 'verifyOtp');
+        Route::post('/resend-otp', 'resendOtp');
+        Route::post('/login', 'login');
 
-use App\Http\Controllers\Api\Auth\AuthController;
-use Illuminate\Support\Facades\Route;
-
-Route::prefix('v1')
-    ->group(function () {
-          ## ------------------ AUTH ROUTES ------------------ ##
-        Route::controller(AuthController::class)->middleware('guest')->group(function () {
-            Route::post('/register', 'register');
-            Route::post('/verify-otp', 'verifyOtp');
-            Route::post('/resend-otp', 'resendOtp');
-            Route::post('/login', 'login');
+        Route::middleware('auth:sanctum')->group(function() {
+            Route::post('/logout', 'logout');
         });
+    });
+});

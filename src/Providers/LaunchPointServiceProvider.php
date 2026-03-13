@@ -31,10 +31,8 @@ class LaunchPointServiceProvider extends ServiceProvider
 
     protected function publishApiResponseTrait()
     {
-        // استخدام realpath لضمان المسار الصحيح 100%
-        $stubPath = realpath(__DIR__ . '/../stubs/ApiResponseTrait.stub');
         $this->generateFile(
-            $stubPath,
+            __DIR__ . '/../stubs/ApiResponseTrait.stub',
             app_path('Traits/ApiResponseTrait.php'),
             ['{{namespace}}' => 'App\Traits']
         );
@@ -42,9 +40,8 @@ class LaunchPointServiceProvider extends ServiceProvider
 
     protected function publishHelpers()
     {
-        $stubPath = realpath(__DIR__ . '/../stubs/FileHelper.stub');
         $this->generateFile(
-            $stubPath,
+            __DIR__ . '/../stubs/FileHelper.stub',
             app_path('Helpers/FileHelper.php'),
             ['{{namespace}}' => 'App\Helpers']
         );
@@ -60,11 +57,11 @@ class LaunchPointServiceProvider extends ServiceProvider
             'LoginRequest.stub'      => app_path('Http/Requests/Auth/LoginRequest.php'),
         ];
 
-        // تحديد مجلد الـ stubs بشكل مطلق
-        $stubsDir = realpath(__DIR__ . '/../stubs');
-
         foreach ($map as $stubName => $destPath) {
-            $stubPath = $stubsDir . DIRECTORY_SEPARATOR . $stubName;
+            $stubPath = __DIR__ . "/../stubs/{$stubName}";
+
+            // حماية: التأكد أننا لا نقرأ الملف الحالي (البروفايدر)
+            if (realpath($stubPath) === __FILE__) continue;
 
             $this->generateFile($stubPath, $destPath, [
                 '{{namespace}}'            => $this->resolveNamespace($destPath),
@@ -77,17 +74,49 @@ class LaunchPointServiceProvider extends ServiceProvider
         }
     }
 
+    protected function appendApiRoutes()
+    {
+        $path = base_path('routes/api.php');
+        $stub = __DIR__ . '/../stubs/api_routes.stub';
+
+        if (File::exists($path) && File::exists($stub)) {
+            $content = File::get($path);
+            $stubContent = File::get($stub);
+
+            if (!str_contains($content, 'LaunchPoint Routes')) {
+                // إضافة مسافة سطر قبل الإضافة لضمان التنسيق
+                File::append($path, "\n" . $stubContent);
+            }
+        }
+    }
+
+    protected function updateExceptionHandler()
+    {
+        $path = app_path('Exceptions/Handler.php');
+        if (!File::exists($path)) return;
+
+        $stub = __DIR__ . '/../stubs/handler_renderable.stub';
+
+        if (File::exists($stub)) {
+            $content = File::get($path);
+            if (!str_contains($content, 'LaunchPoint Exception Handling')) {
+                $renderable = File::get($stub);
+                $content = str_replace('// register renderable here', $renderable, $content);
+                File::put($path, $content);
+            }
+        }
+    }
+
     protected function generateFile($stubPath, $destPath, $replacements = [])
     {
-        // تأكد أن الـ stub موجود وأنه ليس هو نفسه ملف الـ Provider
-        if ($stubPath && File::exists($stubPath) && $stubPath !== __FILE__) {
+        if (File::exists($stubPath)) {
             File::ensureDirectoryExists(dirname($destPath));
 
             $content = File::get($stubPath);
 
-            // تنفيذ التبديل
+            // تبديل المتغيرات
             foreach ($replacements as $search => $replace) {
-                $content = str_replace($search, $replace, $content);
+                $content = str_replace($search, (string) $replace, $content);
             }
 
             File::put($destPath, $content);
@@ -105,6 +134,4 @@ class LaunchPointServiceProvider extends ServiceProvider
 
         return 'App' . (count($segments) ? '\\' . implode('\\', $segments) : '');
     }
-
-    // ... باقي الميثودز (appendApiRoutes, updateExceptionHandler) تبقى كما هي
 }
