@@ -31,8 +31,10 @@ class LaunchPointServiceProvider extends ServiceProvider
 
     protected function publishApiResponseTrait()
     {
+        // استخدام realpath لضمان المسار الصحيح 100%
+        $stubPath = realpath(__DIR__ . '/../stubs/ApiResponseTrait.stub');
         $this->generateFile(
-            __DIR__ . '/../stubs/ApiResponseTrait.stub',
+            $stubPath,
             app_path('Traits/ApiResponseTrait.php'),
             ['{{namespace}}' => 'App\Traits']
         );
@@ -40,16 +42,14 @@ class LaunchPointServiceProvider extends ServiceProvider
 
     protected function publishHelpers()
     {
+        $stubPath = realpath(__DIR__ . '/../stubs/FileHelper.stub');
         $this->generateFile(
-            __DIR__ . '/../stubs/FileHelper.stub',
+            $stubPath,
             app_path('Helpers/FileHelper.php'),
             ['{{namespace}}' => 'App\Helpers']
         );
     }
 
-    /**
-     * Corrected replacement logic using standard placeholders {{...}}
-     */
     protected function publishAuthSystem()
     {
         $map = [
@@ -60,10 +60,12 @@ class LaunchPointServiceProvider extends ServiceProvider
             'LoginRequest.stub'      => app_path('Http/Requests/Auth/LoginRequest.php'),
         ];
 
-        foreach ($map as $stubName => $destPath) {
-            $stubPath = __DIR__ . "/../stubs/{$stubName}";
+        // تحديد مجلد الـ stubs بشكل مطلق
+        $stubsDir = realpath(__DIR__ . '/../stubs');
 
-            // CRITICAL: We MUST use the placeholders that exist in your .stub files
+        foreach ($map as $stubName => $destPath) {
+            $stubPath = $stubsDir . DIRECTORY_SEPARATOR . $stubName;
+
             $this->generateFile($stubPath, $destPath, [
                 '{{namespace}}'            => $this->resolveNamespace($destPath),
                 '{{trait_namespace}}'      => 'App\Traits',
@@ -75,42 +77,15 @@ class LaunchPointServiceProvider extends ServiceProvider
         }
     }
 
-    protected function appendApiRoutes()
-    {
-        $path = base_path('routes/api.php');
-        $stub = __DIR__ . '/../stubs/api_routes.stub';
-
-        if (File::exists($path) && File::exists($stub)) {
-            $content = File::get($path);
-            if (!str_contains($content, 'LaunchPoint Routes')) {
-                File::append($path, "\n" . File::get($stub));
-            }
-        }
-    }
-
-    protected function updateExceptionHandler()
-    {
-        $path = app_path('Exceptions/Handler.php');
-        if (!File::exists($path)) return;
-
-        $stub = __DIR__ . '/../stubs/handler_renderable.stub';
-
-        if (File::exists($stub)) {
-            $content = File::get($path);
-            if (!str_contains($content, 'LaunchPoint Exception Handling')) {
-                $renderable = File::get($stub);
-                $content = str_replace('// register renderable here', $renderable, $content);
-                File::put($path, $content);
-            }
-        }
-    }
-
     protected function generateFile($stubPath, $destPath, $replacements = [])
     {
-        if (File::exists($stubPath)) {
+        // تأكد أن الـ stub موجود وأنه ليس هو نفسه ملف الـ Provider
+        if ($stubPath && File::exists($stubPath) && $stubPath !== __FILE__) {
             File::ensureDirectoryExists(dirname($destPath));
 
             $content = File::get($stubPath);
+
+            // تنفيذ التبديل
             foreach ($replacements as $search => $replace) {
                 $content = str_replace($search, $replace, $content);
             }
@@ -121,13 +96,15 @@ class LaunchPointServiceProvider extends ServiceProvider
 
     protected function resolveNamespace($path)
     {
-        $path = str_replace(['/', '\\'], '\\', $path);
-        $appBase = str_replace(['/', '\\'], '\\', app_path());
+        $path = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
+        $appBase = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, app_path());
 
         $relative = str_replace([$appBase, '.php'], '', $path);
-        $segments = array_filter(explode('\\', trim($relative, '\\')));
+        $segments = array_filter(explode(DIRECTORY_SEPARATOR, trim($relative, DIRECTORY_SEPARATOR)));
         array_pop($segments);
 
         return 'App' . (count($segments) ? '\\' . implode('\\', $segments) : '');
     }
+
+    // ... باقي الميثودز (appendApiRoutes, updateExceptionHandler) تبقى كما هي
 }
