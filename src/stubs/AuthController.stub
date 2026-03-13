@@ -4,84 +4,83 @@ namespace {{namespace}};
 
 use App\Http\Controllers\Controller;
 use {{trait_namespace}}\ApiResponseTrait;
-use {{namespace}}\LoginRequest;
-use {{namespace}}\RegisterRequest;
-use App\Services\Api\Auth\AuthService;
+use {{request_namespace}}\LoginRequest;
+use {{request_namespace}}\RegisterRequest;
+use {{service_namespace}}\AuthService;
 use Illuminate\Http\Request;
 
-/**
- * Class AuthController
- * Handles authentication and OTP verification processes.
- */
 class AuthController extends Controller
 {
     use ApiResponseTrait;
 
-    /**
-     * @var AuthService
-     */
-    protected $authService;
+    protected AuthService $authService;
 
-    /**
-     * AuthController constructor.
-     * @param AuthService $authService
-     */
     public function __construct(AuthService $authService)
     {
         $this->authService = $authService;
     }
 
-    /**
-     * Handle user registration.
-     * @param RegisterRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function register(RegisterRequest $request)
     {
-        $response = $this->authService->register($request->validated(), $request->file('image'));
-        return $this->apiResponse($response['data'], $response['message'], $response['status']);
+        $response = $this->authService->register(
+            $request->validated(),
+            $request->file('image')
+        );
+
+        return $this->apiResponse(
+            $response['data'],
+            $response['message'],
+            $response['status']
+        );
     }
 
-    /**
-     * Handle user login with dynamic identifier (Email/Phone).
-     * @param LoginRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function login(LoginRequest $request)
     {
-        $response = $this->authService->login($request->validated());
-        return $this->apiResponse($response['data'], $response['message'], $response['status']);
+        $response = $this->authService->login(
+            $request->validated()
+        );
+
+        return $this->apiResponse(
+            $response['data'],
+            $response['message'],
+            $response['status']
+        );
     }
 
-    /**
-     * Verify OTP token.
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function verifyOtp(Request $request)
     {
-        $response = $this->authService->verifyOtp($request->all());
-        return $this->apiResponse($response['data'], $response['message'], $response['status']);
+        $response = $this->authService->verifyOtp(
+            $request->all()
+        );
+
+        return $this->apiResponse(
+            $response['data'],
+            $response['message'],
+            $response['status']
+        );
     }
 
-    /**
-     * Resend OTP token to the user.
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function resendOtp(Request $request)
     {
-        $response = $this->authService->resendOtp($request->all());
-        return $this->apiResponse($response['data'], $response['message'], $response['status']);
+        $response = $this->authService->resendOtp(
+            $request->all()
+        );
+
+        return $this->apiResponse(
+            $response['data'],
+            $response['message'],
+            $response['status']
+        );
     }
 
-    /**
-     * Log the user out of the application.
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function logout()
     {
         $response = $this->authService->logout();
-        return $this->apiResponse($response['data'], $response['message'], $response['status']);
+
+        return $this->apiResponse(
+            $response['data'],
+            $response['message'],
+            $response['status']
+        );
     }
 }

@@ -6,7 +6,7 @@ use Illuminate\Http\JsonResponse;
 
 trait ApiResponseTrait
 {
-    public function sendResponse(array $options = []): JsonResponse
+    public function apiResponse(array $options = []): JsonResponse
     {
         $code = $options['code'] ?? 200;
         $message = $options['message'] ?? null;

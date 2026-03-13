@@ -7,46 +7,26 @@ use Illuminate\Support\Facades\File;
 
 /**
  * Class LaunchPointServiceProvider
- * * Responsible for bootstrapping the LaunchPoint package components,
+ * Responsible for bootstrapping the LaunchPoint package components,
  * including authentication systems, helpers, and exception handling.
  */
 class LaunchPointServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     *
-     * @return void
-     */
     public function register()
     {
         $this->mergeConfigFrom(__DIR__ . '/../../config/launchpoint.php', 'launchpoint');
     }
 
-    /**
-     * Bootstrap any application services.
-     *
-     * @return void
-     */
     public function boot()
     {
-        // Register assets for manual publishing via artisan
         $this->registerPublishables();
-
-        // Automatic generation of core components
         $this->publishApiResponseTrait();
         $this->publishHelpers();
         $this->publishAuthSystem();
-
-        // Inject application hooks and custom configurations
         $this->appendApiRoutes();
         $this->updateExceptionHandler();
     }
 
-    /**
-     * Define files available for manual publishing.
-     *
-     * @return void
-     */
     protected function registerPublishables()
     {
         $this->publishes([
@@ -59,41 +39,24 @@ class LaunchPointServiceProvider extends ServiceProvider
         ], 'launchpoint-helpers');
     }
 
-    /**
-     * Publish the standardized API response trait.
-     *
-     * @return void
-     */
     protected function publishApiResponseTrait()
     {
-        $path = app_path('Traits/ApiResponseTrait.php');
-        $stub = __DIR__ . '/../stubs/ApiResponseTrait.stub';
-
-        $this->generateFile($stub, $path, [
-            '{{namespace}}' => 'App\Traits'
-        ]);
+        $this->generateFile(
+            __DIR__ . '/../stubs/ApiResponseTrait.stub',
+            app_path('Traits/ApiResponseTrait.php'),
+            ['{{namespace}}' => 'App\Traits']
+        );
     }
 
-    /**
-     * Publish the global file management helper.
-     *
-     * @return void
-     */
     protected function publishHelpers()
     {
-        $path = app_path('Helpers/FileHelper.php');
-        $stub = __DIR__ . '/../stubs/FileHelper.stub';
-
-        $this->generateFile($stub, $path, [
-            '{{namespace}}' => 'App\Helpers'
-        ]);
+        $this->generateFile(
+            __DIR__ . '/../stubs/FileHelper.stub',
+            app_path('Helpers/FileHelper.php'),
+            ['{{namespace}}' => 'App\Helpers']
+        );
     }
 
-    /**
-     * Deploy the authentication boilerplate in the specified directories.
-     *
-     * @return void
-     */
     protected function publishAuthSystem()
     {
         $map = [
@@ -104,9 +67,9 @@ class LaunchPointServiceProvider extends ServiceProvider
             'AuthService.stub' => app_path('Services/Api/Auth/AuthService.php'),
             'AuthRepository.stub' => app_path('Repositories/Api/Auth/AuthRepository.php'),
 
-            // Requests (As per your specific directory requirements)
+            // Requests (جميعها داخل Auth folder)
             'RegisterRequest.stub' => app_path('Http/Requests/Auth/RegisterRequest.php'),
-            'LoginRequest.stub' => app_path('Http/Requests/Api/LoginRequest.php'),
+            'LoginRequest.stub' => app_path('Http/Requests/Auth/LoginRequest.php'),
         ];
 
         foreach ($map as $stubName => $destPath) {
@@ -120,11 +83,6 @@ class LaunchPointServiceProvider extends ServiceProvider
         }
     }
 
-    /**
-     * Append package routes to the host application's api.php file.
-     *
-     * @return void
-     */
     protected function appendApiRoutes()
     {
         $path = base_path('routes/api.php');
@@ -138,11 +96,6 @@ class LaunchPointServiceProvider extends ServiceProvider
         }
     }
 
-    /**
-     * Inject custom exception handling logic into the application's Handler.
-     *
-     * @return void
-     */
     protected function updateExceptionHandler()
     {
         $path = app_path('Exceptions/Handler.php');
@@ -158,14 +111,6 @@ class LaunchPointServiceProvider extends ServiceProvider
         }
     }
 
-    /**
-     * Internal helper for file generation and dynamic replacement.
-     *
-     * @param string $stubPath
-     * @param string $destPath
-     * @param array $replacements
-     * @return void
-     */
     protected function generateFile($stubPath, $destPath, $replacements = [])
     {
         if (!File::exists($destPath) && File::exists($stubPath)) {
@@ -180,19 +125,12 @@ class LaunchPointServiceProvider extends ServiceProvider
         }
     }
 
-    /**
-     * Resolve the PSR-4 namespace based on the absolute file path.
-     *
-     * @param string $path
-     * @return string
-     */
     protected function resolveNamespace($path)
     {
         $relative = str_replace([app_path(), '.php'], '', $path);
         $relative = trim($relative, DIRECTORY_SEPARATOR);
         $parts = explode(DIRECTORY_SEPARATOR, $relative);
         array_pop($parts);
-
         return 'App\\' . implode('\\', $parts);
     }
 }

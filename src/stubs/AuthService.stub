@@ -2,63 +2,64 @@
 
 namespace {{namespace}};
 
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use {{trait_namespace}}\ApiResponseTrait;
+use {{repository_namespace}}\AuthRepository;
+use {{helper_namespace}}\FileHelper;
+use Ichtrojan\Otp\Otp;
 
-/**
- * Class RegisterRequest
- * Handles the validation logic for user registration.
- */
-class RegisterRequest extends FormRequest
+class AuthService
 {
-    use ApiResponseTrait;
+    protected $authRepository;
 
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
-    public function authorize(): bool
+    public function __construct(AuthRepository $authRepository)
     {
-        return true;
+        $this->authRepository = $authRepository;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
-    public function rules(): array
+    public function register(array $data, $image = null)
     {
+        if ($image) {
+            $data['image'] = FileHelper::upload($image, 'users');
+        }
+
+        $user = $this->authRepository->create($data);
+
+        $identifier = $data['email'] ?? $data['phone'];
+        (new Otp)->generate($identifier);
+
         return [
-            'image'        => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'name'         => 'required|string|max:255',
-            'phone'        => 'required|string|unique:users,phone',
-            'email'        => 'required|string|email|unique:users,email',
-            'password'     => 'required|string|min:8|confirmed',
-            'role'         => 'nullable|string|in:buyer,seller',
-            'accept_terms' => 'required|accepted',
+            'status' => 201,
+            'message' => 'User registered successfully. Please verify OTP.',
+            'data' => $user
         ];
     }
 
-    /**
-     * Handle a failed validation attempt.
-     *
-     * @param  \Illuminate\Contracts\Validation\Validator  $validator
-     * @return void
-     *
-     * @throws \Illuminate\Http\Exceptions\HttpResponseException
-     */
-    protected function failedValidation(Validator $validator)
+    public function login(array $data)
     {
-        throw new HttpResponseException(
-            $this->apiResponse(
-                $validator->errors(),
-                $validator->errors()->first(),
-                422
-            )
-        );
+        $identifier = filter_var($data['user_input'], FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
+
+        return $this->authRepository->login($data, $identifier);
+    }
+
+    public function verifyOtp(array $data)
+    {
+        $identifier = filter_var($data['user_input'], FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
+
+        return $this->authRepository->verifyOtp($data, $identifier);
+    }
+
+    public function resendOtp(array $data)
+    {
+        (new Otp)->generate($data['user_input']);
+
+        return [
+            'status' => 200,
+            'message' => 'OTP resent successfully.',
+            'data' => []
+        ];
+    }
+
+    public function logout()
+    {
+        return $this->authRepository->logout();
     }
 }
