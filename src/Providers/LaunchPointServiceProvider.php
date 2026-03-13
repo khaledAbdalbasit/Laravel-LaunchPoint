@@ -3,51 +3,64 @@
 namespace KhaledAbdalbasit\LaunchPoint\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\File;
+use KhaledAbdalbasit\LaunchPoint\Commands\InstallLaunchPoint;
 
+/**
+ * Class LaunchPointServiceProvider
+ * * This provider handles the registration of package configurations and commands.
+ * The actual file generation is now triggered via the Artisan command.
+ */
 class LaunchPointServiceProvider extends ServiceProvider
 {
+    /**
+     * Register any application services.
+     *
+     * @return void
+     */
     public function register()
     {
+        // Merge package configuration
         $this->mergeConfigFrom(__DIR__ . '/../../config/launchpoint.php', 'launchpoint');
     }
 
+    /**
+     * Bootstrap any application services.
+     *
+     * @return void
+     */
     public function boot()
     {
-        $this->registerPublishables();
-        $this->publishApiResponseTrait();
-        $this->publishHelpers();
-        $this->publishAuthSystem();
-        $this->appendApiRoutes();
-        $this->updateExceptionHandler();
+        // Register the installation command if running in console
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                InstallLaunchPoint::class,
+            ]);
+
+            $this->registerPublishables();
+        }
     }
 
+    /**
+     * Define the files that can be published via the vendor:publish command.
+     *
+     * @return void
+     */
     protected function registerPublishables()
     {
         $this->publishes([
             __DIR__ . '/../../config/launchpoint.php' => config_path('launchpoint.php'),
         ], 'launchpoint-config');
+
+        // Note: We keep the tag-based publishing option as a fallback
+        // but the main logic is now inside our Install Command.
     }
 
-    protected function publishApiResponseTrait()
-    {
-        $this->generateFile(
-            __DIR__ . '/../stubs/ApiResponseTrait.stub',
-            app_path('Traits/ApiResponseTrait.php'),
-            ['{{namespace}}' => 'App\Traits']
-        );
-    }
+    /**
+     * Public methods to be accessed by the Install Command.
+     * These methods replace the protected logic that was running on boot.
+     */
 
-    protected function publishHelpers()
-    {
-        $this->generateFile(
-            __DIR__ . '/../stubs/FileHelper.stub',
-            app_path('Helpers/FileHelper.php'),
-            ['{{namespace}}' => 'App\Helpers']
-        );
-    }
-
-    protected function publishAuthSystem()
+    public function publishAuthSystem()
     {
         $map = [
             'AuthController.stub'    => app_path('Http/Controllers/Api/Auth/AuthController.php'),
@@ -55,12 +68,13 @@ class LaunchPointServiceProvider extends ServiceProvider
             'AuthRepository.stub'    => app_path('Repositories/Api/Auth/AuthRepository.php'),
             'RegisterRequest.stub'   => app_path('Http/Requests/Auth/RegisterRequest.php'),
             'LoginRequest.stub'      => app_path('Http/Requests/Auth/LoginRequest.php'),
+            'ApiResponseTrait.stub'  => app_path('Traits/ApiResponseTrait.php'),
+            'FileHelper.stub'        => app_path('Helpers/FileHelper.php'),
         ];
 
         foreach ($map as $stubName => $destPath) {
             $stubPath = __DIR__ . "/../stubs/{$stubName}";
 
-            // تأكد إننا بنستخدم placeholders فقط
             $this->generateFile($stubPath, $destPath, [
                 '{{namespace}}'            => $this->resolveNamespace($destPath),
                 '{{trait_namespace}}'      => 'App\Traits',
@@ -72,49 +86,19 @@ class LaunchPointServiceProvider extends ServiceProvider
         }
     }
 
-    protected function appendApiRoutes()
+    public function generateFile($stubPath, $destPath, $replacements = [])
     {
-        $path = base_path('routes/api.php');
-        $stub = __DIR__ . '/../stubs/api_routes.stub';
-
-        if (File::exists($path) && File::exists($stub)) {
-            $stubContent = File::get($stub);
-            $currentContent = File::get($path);
-
-            if (!str_contains($currentContent, 'LaunchPoint Routes')) {
-                File::append($path, "\n" . $stubContent);
-            }
-        }
-    }
-
-    protected function updateExceptionHandler()
-    {
-        $path = app_path('Exceptions/Handler.php');
-        if (!File::exists($path)) return;
-
-        $stub = __DIR__ . '/../stubs/handler_renderable.stub';
-        if (File::exists($stub)) {
-            $content = File::get($path);
-            if (!str_contains($content, 'LaunchPoint Exception Handling')) {
-                $content = str_replace('// register renderable here', File::get($stub), $content);
-                File::put($path, $content);
-            }
-        }
-    }
-
-    protected function generateFile($stubPath, $destPath, $replacements = [])
-    {
-        if (File::exists($stubPath)) {
-            File::ensureDirectoryExists(dirname($destPath));
-            $content = File::get($stubPath);
+        if (\Illuminate\Support\Facades\File::exists($stubPath)) {
+            \Illuminate\Support\Facades\File::ensureDirectoryExists(dirname($destPath));
+            $content = \Illuminate\Support\Facades\File::get($stubPath);
             foreach ($replacements as $search => $replace) {
                 $content = str_replace($search, (string)$replace, $content);
             }
-            File::put($destPath, $content);
+            \Illuminate\Support\Facades\File::put($destPath, $content);
         }
     }
 
-    protected function resolveNamespace($path)
+    public function resolveNamespace($path)
     {
         $path = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
         $appBase = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, app_path());
