@@ -1,86 +1,159 @@
 <?php
 
-namespace {{namespace}};
+namespace KhaledAbdalbasit\LaunchPoint\Providers;
 
-use App\Http\Controllers\Controller;
-use {{trait_namespace}}\ApiResponseTrait;
-use {{request_namespace}}\LoginRequest;
-use {{request_namespace}}\RegisterRequest;
-use {{service_namespace}}\AuthService;
-use Illuminate\Http\Request;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\File;
 
-class AuthController extends Controller
+/**
+ * Class LaunchPointServiceProvider
+ * * Handles the initialization and publication of the LaunchPoint starter kit.
+ */
+class LaunchPointServiceProvider extends ServiceProvider
 {
-    use ApiResponseTrait;
-
-    protected AuthService $authService;
-
-    public function __construct(AuthService $authService)
+    /**
+     * Register package configuration.
+     */
+    public function register()
     {
-        $this->authService = $authService;
+        $this->mergeConfigFrom(__DIR__ . '/../../config/launchpoint.php', 'launchpoint');
     }
 
-    public function register(RegisterRequest $request)
+    /**
+     * Bootstrap package services and components.
+     */
+    public function boot()
     {
-        $response = $this->authService->register(
-            $request->validated(),
-            $request->file('image')
-        );
-
-        return $this->apiResponse(
-            $response['data'],
-            $response['message'],
-            $response['status']
-        );
+        $this->registerPublishables();
+        $this->publishApiResponseTrait();
+        $this->publishHelpers();
+        $this->publishAuthSystem();
+        $this->appendApiRoutes();
+        $this->updateExceptionHandler();
     }
 
-    public function login(LoginRequest $request)
+    /**
+     * Define files that can be published via artisan command.
+     */
+    protected function registerPublishables()
     {
-        $response = $this->authService->login(
-            $request->validated()
-        );
-
-        return $this->apiResponse(
-            $response['data'],
-            $response['message'],
-            $response['status']
-        );
+        $this->publishes([
+            __DIR__ . '/../../config/launchpoint.php' => config_path('launchpoint.php'),
+        ], 'launchpoint-config');
     }
 
-    public function verifyOtp(Request $request)
+    protected function publishApiResponseTrait()
     {
-        $response = $this->authService->verifyOtp(
-            $request->all()
-        );
-
-        return $this->apiResponse(
-            $response['data'],
-            $response['message'],
-            $response['status']
+        $this->generateFile(
+            __DIR__ . '/../stubs/ApiResponseTrait.stub',
+            app_path('Traits/ApiResponseTrait.php'),
+            ['{{namespace}}' => 'App\Traits']
         );
     }
 
-    public function resendOtp(Request $request)
+    protected function publishHelpers()
     {
-        $response = $this->authService->resendOtp(
-            $request->all()
-        );
-
-        return $this->apiResponse(
-            $response['data'],
-            $response['message'],
-            $response['status']
+        $this->generateFile(
+            __DIR__ . '/../stubs/FileHelper.stub',
+            app_path('Helpers/FileHelper.php'),
+            ['{{namespace}}' => 'App\Helpers']
         );
     }
 
-    public function logout()
+    /**
+     * Publishes the Auth system and injects dynamic namespaces into stubs.
+     */
+    protected function publishAuthSystem()
     {
-        $response = $this->authService->logout();
+        $map = [
+            'AuthController.stub'    => app_path('Http/Controllers/Api/Auth/AuthController.php'),
+            'AuthService.stub'       => app_path('Services/Api/Auth/AuthService.php'),
+            'AuthRepository.stub'    => app_path('Repositories/Api/Auth/AuthRepository.php'),
+            'RegisterRequest.stub'   => app_path('Http/Requests/Auth/RegisterRequest.php'),
+            'LoginRequest.stub'      => app_path('Http/Requests/Auth/LoginRequest.php'),
+        ];
 
-        return $this->apiResponse(
-            $response['data'],
-            $response['message'],
-            $response['status']
-        );
+        foreach ($map as $stubName => $destPath) {
+            $stubPath = __DIR__ . "/../stubs/{$stubName}";
+
+            $this->generateFile($stubPath, $destPath, [
+                '{{namespace}}'            => $this->resolveNamespace($destPath),
+                '{{trait_namespace}}'      => 'App\Traits',
+                '{{repository_namespace}}' => 'App\Repositories\Api\Auth',
+                '{{service_namespace}}'    => 'App\Services\Api\Auth',
+                '{{request_namespace}}'    => 'App\Http\Requests\Auth',
+                '{{helper_namespace}}'     => 'App\Helpers',
+            ]);
+        }
+    }
+
+    protected function appendApiRoutes()
+    {
+        $path = base_path('routes/api.php');
+        $stub = __DIR__ . '/../stubs/api_routes.stub';
+
+        if (File::exists($path) && File::exists($stub)) {
+            $content = File::get($path);
+            if (!str_contains($content, 'LaunchPoint Routes')) {
+                File::append($path, "\n" . File::get($stub));
+            }
+        }
+    }
+
+    protected function updateExceptionHandler()
+    {
+        $path = app_path('Exceptions/Handler.php');
+        if (!File::exists($path)) return;
+
+        $stub = __DIR__ . '/../stubs/handler_renderable.stub';
+
+        if (File::exists($stub)) {
+            $content = File::get($path);
+            if (!str_contains($content, 'LaunchPoint Exception Handling')) {
+                $renderable = File::get($stub);
+                $content = str_replace('// register renderable here', $renderable, $content);
+                File::put($path, $content);
+            }
+        }
+    }
+
+    /**
+     * Core file generation with replacement logic.
+     */
+    protected function generateFile($stubPath, $destPath, $replacements = [])
+    {
+        if (File::exists($stubPath)) {
+            File::ensureDirectoryExists(dirname($destPath));
+
+            $content = File::get($stubPath);
+            foreach ($replacements as $search => $replace) {
+                $content = str_replace($search, $replace, $content);
+            }
+
+            File::put($destPath, $content);
+        }
+    }
+
+    /**
+     * Advanced Namespace Resolver.
+     * Ensures consistent PSR-4 namespaces regardless of OS or existing directory structure.
+     */
+    protected function resolveNamespace($path)
+    {
+        // 1. Unify all separators to backslashes
+        $path = str_replace(['/', '\\'], '\\', $path);
+        $appBase = str_replace(['/', '\\'], '\\', app_path());
+
+        // 2. Remove the base app path and the .php extension
+        $relative = str_replace([$appBase, '.php'], '', $path);
+
+        // 3. Trim extra backslashes and split into parts
+        $segments = array_filter(explode('\\', trim($relative, '\\')));
+
+        // 4. Remove the class name (the last segment)
+        array_pop($segments);
+
+        // 5. Prepend 'App' and join with single backslashes
+        return 'App' . (count($segments) ? '\\' . implode('\\', $segments) : '');
     }
 }
