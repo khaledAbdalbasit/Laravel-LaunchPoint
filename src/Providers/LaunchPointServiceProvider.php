@@ -60,9 +60,7 @@ class LaunchPointServiceProvider extends ServiceProvider
         foreach ($map as $stubName => $destPath) {
             $stubPath = __DIR__ . "/../stubs/{$stubName}";
 
-            // حماية: التأكد أننا لا نقرأ الملف الحالي (البروفايدر)
-            if (realpath($stubPath) === __FILE__) continue;
-
+            // تأكد إننا بنستخدم placeholders فقط
             $this->generateFile($stubPath, $destPath, [
                 '{{namespace}}'            => $this->resolveNamespace($destPath),
                 '{{trait_namespace}}'      => 'App\Traits',
@@ -80,11 +78,10 @@ class LaunchPointServiceProvider extends ServiceProvider
         $stub = __DIR__ . '/../stubs/api_routes.stub';
 
         if (File::exists($path) && File::exists($stub)) {
-            $content = File::get($path);
             $stubContent = File::get($stub);
+            $currentContent = File::get($path);
 
-            if (!str_contains($content, 'LaunchPoint Routes')) {
-                // إضافة مسافة سطر قبل الإضافة لضمان التنسيق
+            if (!str_contains($currentContent, 'LaunchPoint Routes')) {
                 File::append($path, "\n" . $stubContent);
             }
         }
@@ -96,12 +93,10 @@ class LaunchPointServiceProvider extends ServiceProvider
         if (!File::exists($path)) return;
 
         $stub = __DIR__ . '/../stubs/handler_renderable.stub';
-
         if (File::exists($stub)) {
             $content = File::get($path);
             if (!str_contains($content, 'LaunchPoint Exception Handling')) {
-                $renderable = File::get($stub);
-                $content = str_replace('// register renderable here', $renderable, $content);
+                $content = str_replace('// register renderable here', File::get($stub), $content);
                 File::put($path, $content);
             }
         }
@@ -111,14 +106,10 @@ class LaunchPointServiceProvider extends ServiceProvider
     {
         if (File::exists($stubPath)) {
             File::ensureDirectoryExists(dirname($destPath));
-
             $content = File::get($stubPath);
-
-            // تبديل المتغيرات
             foreach ($replacements as $search => $replace) {
-                $content = str_replace($search, (string) $replace, $content);
+                $content = str_replace($search, (string)$replace, $content);
             }
-
             File::put($destPath, $content);
         }
     }
@@ -127,11 +118,9 @@ class LaunchPointServiceProvider extends ServiceProvider
     {
         $path = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
         $appBase = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, app_path());
-
         $relative = str_replace([$appBase, '.php'], '', $path);
         $segments = array_filter(explode(DIRECTORY_SEPARATOR, trim($relative, DIRECTORY_SEPARATOR)));
         array_pop($segments);
-
         return 'App' . (count($segments) ? '\\' . implode('\\', $segments) : '');
     }
 }
