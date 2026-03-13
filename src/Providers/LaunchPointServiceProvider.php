@@ -7,16 +7,27 @@ use Illuminate\Support\Facades\File;
 
 /**
  * Class LaunchPointServiceProvider
- * Responsible for bootstrapping the LaunchPoint package components,
- * including authentication systems, helpers, and exception handling.
+ * * This service provider is responsible for bootstrapping the LaunchPoint
+ * authentication system, publishing necessary components, and configuring
+ * the application environment.
  */
 class LaunchPointServiceProvider extends ServiceProvider
 {
+    /**
+     * Register any application services.
+     *
+     * @return void
+     */
     public function register()
     {
         $this->mergeConfigFrom(__DIR__ . '/../../config/launchpoint.php', 'launchpoint');
     }
 
+    /**
+     * Bootstrap any application services.
+     *
+     * @return void
+     */
     public function boot()
     {
         $this->registerPublishables();
@@ -27,18 +38,23 @@ class LaunchPointServiceProvider extends ServiceProvider
         $this->updateExceptionHandler();
     }
 
+    /**
+     * Register the package's publishable resources.
+     *
+     * @return void
+     */
     protected function registerPublishables()
     {
         $this->publishes([
             __DIR__ . '/../../config/launchpoint.php' => config_path('launchpoint.php'),
         ], 'launchpoint-config');
-
-        $this->publishes([
-            __DIR__ . '/../stubs/ApiResponseTrait.stub' => app_path('Traits/ApiResponseTrait.php'),
-            __DIR__ . '/../stubs/FileHelper.stub' => app_path('Helpers/FileHelper.php'),
-        ], 'launchpoint-helpers');
     }
 
+    /**
+     * Generate and publish the ApiResponseTrait.
+     *
+     * @return void
+     */
     protected function publishApiResponseTrait()
     {
         $this->generateFile(
@@ -48,6 +64,11 @@ class LaunchPointServiceProvider extends ServiceProvider
         );
     }
 
+    /**
+     * Generate and publish helper classes.
+     *
+     * @return void
+     */
     protected function publishHelpers()
     {
         $this->generateFile(
@@ -57,32 +78,40 @@ class LaunchPointServiceProvider extends ServiceProvider
         );
     }
 
+    /**
+     * Orchestrate the publication of the complete authentication system.
+     *
+     * @return void
+     */
     protected function publishAuthSystem()
     {
         $map = [
-            // Controllers
             'AuthController.stub' => app_path('Http/Controllers/Api/Auth/AuthController.php'),
-
-            // Services & Repositories
             'AuthService.stub' => app_path('Services/Api/Auth/AuthService.php'),
             'AuthRepository.stub' => app_path('Repositories/Api/Auth/AuthRepository.php'),
-
-            // Requests (جميعها داخل Auth folder)
             'RegisterRequest.stub' => app_path('Http/Requests/Auth/RegisterRequest.php'),
             'LoginRequest.stub' => app_path('Http/Requests/Auth/LoginRequest.php'),
         ];
 
         foreach ($map as $stubName => $destPath) {
             $stubPath = __DIR__ . "/../stubs/{$stubName}";
-            $namespace = $this->resolveNamespace($destPath);
 
             $this->generateFile($stubPath, $destPath, [
-                '{{namespace}}' => $namespace,
-                '{{trait_namespace}}' => 'App\Traits'
+                '{{namespace}}' => $this->resolveNamespace($destPath),
+                '{{trait_namespace}}' => 'App\Traits',
+                '{{repository_namespace}}' => 'App\Repositories\Api\Auth',
+                '{{service_namespace}}' => 'App\Services\Api\Auth',
+                '{{request_namespace}}' => 'App\Http\Requests\Auth',
+                '{{helper_namespace}}' => 'App\Helpers',
             ]);
         }
     }
 
+    /**
+     * Append package-specific routes to the application's API routes.
+     *
+     * @return void
+     */
     protected function appendApiRoutes()
     {
         $path = base_path('routes/api.php');
@@ -96,12 +125,20 @@ class LaunchPointServiceProvider extends ServiceProvider
         }
     }
 
+    /**
+     * Update the application's Exception Handler for custom API responses.
+     * Supports Laravel versions prior to 11.
+     *
+     * @return void
+     */
     protected function updateExceptionHandler()
     {
         $path = app_path('Exceptions/Handler.php');
+        if (!File::exists($path)) return;
+
         $stub = __DIR__ . '/../stubs/handler_renderable.stub';
 
-        if (File::exists($path) && File::exists($stub)) {
+        if (File::exists($stub)) {
             $content = File::get($path);
             if (!str_contains($content, 'LaunchPoint Exception Handling')) {
                 $renderable = File::get($stub);
@@ -111,6 +148,14 @@ class LaunchPointServiceProvider extends ServiceProvider
         }
     }
 
+    /**
+     * Helper method to generate files from stubs with variable replacements.
+     *
+     * @param string $stubPath
+     * @param string $destPath
+     * @param array $replacements
+     * @return void
+     */
     protected function generateFile($stubPath, $destPath, $replacements = [])
     {
         if (!File::exists($destPath) && File::exists($stubPath)) {
@@ -125,12 +170,28 @@ class LaunchPointServiceProvider extends ServiceProvider
         }
     }
 
+    /**
+     * Resolve the PHP namespace dynamically based on the file destination.
+     *
+     * @param string $path
+     * @return string
+     */
     protected function resolveNamespace($path)
     {
+        // Remove app path and .php extension
         $relative = str_replace([app_path(), '.php'], '', $path);
-        $relative = trim($relative, DIRECTORY_SEPARATOR);
-        $parts = explode(DIRECTORY_SEPARATOR, $relative);
+
+        // Normalize directory separators for cross-platform compatibility
+        $relative = str_replace(['/', '\\'], '\\', $relative);
+
+        // Clean leading/trailing backslashes
+        $relative = trim($relative, '\\');
+
+        // Explode path and remove the class name (last element)
+        $parts = explode('\\', $relative);
         array_pop($parts);
+
+        // Return the fully qualified namespace
         return 'App\\' . implode('\\', $parts);
     }
 }
