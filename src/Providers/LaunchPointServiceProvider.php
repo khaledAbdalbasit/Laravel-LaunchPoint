@@ -5,6 +5,8 @@ namespace KhaledAbdalbasit\LaunchPoint\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\File;
 use KhaledAbdalbasit\LaunchPoint\Commands\InstallLaunchPoint;
+use KhaledAbdalbasit\LaunchPoint\Commands\MakeRepositoryCommand;
+use KhaledAbdalbasit\LaunchPoint\Commands\MakeServiceCommand;
 
 /**
  * Class LaunchPointServiceProvider
@@ -33,6 +35,8 @@ class LaunchPointServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 InstallLaunchPoint::class,
+                MakeServiceCommand::class,
+                MakeRepositoryCommand::class,
             ]);
 
             $this->registerPublishables();
