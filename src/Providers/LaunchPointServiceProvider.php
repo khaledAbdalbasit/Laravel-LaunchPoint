@@ -3,34 +3,33 @@
 namespace KhaledAbdalbasit\LaunchPoint\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\File;
 use KhaledAbdalbasit\LaunchPoint\Commands\InstallLaunchPoint;
 
 /**
  * Class LaunchPointServiceProvider
- * * This provider handles the registration of package configurations and commands.
- * The actual file generation is now triggered via the Artisan command.
+ * * Handles registration of package components and provides helper methods
+ * for granular file scaffolding.
  */
 class LaunchPointServiceProvider extends ServiceProvider
 {
     /**
-     * Register any application services.
+     * Register package configuration and commands.
      *
      * @return void
      */
     public function register()
     {
-        // Merge package configuration
         $this->mergeConfigFrom(__DIR__ . '/../../config/launchpoint.php', 'launchpoint');
     }
 
     /**
-     * Bootstrap any application services.
+     * Bootstrap package services.
      *
      * @return void
      */
     public function boot()
     {
-        // Register the installation command if running in console
         if ($this->app->runningInConsole()) {
             $this->commands([
                 InstallLaunchPoint::class,
@@ -41,7 +40,7 @@ class LaunchPointServiceProvider extends ServiceProvider
     }
 
     /**
-     * Define the files that can be published via the vendor:publish command.
+     * Register vendor publishable resources.
      *
      * @return void
      */
@@ -50,54 +49,89 @@ class LaunchPointServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../../config/launchpoint.php' => config_path('launchpoint.php'),
         ], 'launchpoint-config');
-
-        // Note: We keep the tag-based publishing option as a fallback
-        // but the main logic is now inside our Install Command.
     }
 
     /**
-     * Public methods to be accessed by the Install Command.
-     * These methods replace the protected logic that was running on boot.
+     * Publish core authentication scaffolding.
+     *
+     * @return void
      */
-
     public function publishAuthSystem()
     {
         $map = [
-            'AuthController.stub'    => app_path('Http/Controllers/Api/Auth/AuthController.php'),
-            'AuthService.stub'       => app_path('Services/Api/Auth/AuthService.php'),
-            'AuthRepository.stub'    => app_path('Repositories/Api/Auth/AuthRepository.php'),
-            'RegisterRequest.stub'   => app_path('Http/Requests/Auth/RegisterRequest.php'),
-            'LoginRequest.stub'      => app_path('Http/Requests/Auth/LoginRequest.php'),
-            'ApiResponseTrait.stub'  => app_path('Traits/ApiResponseTrait.php'),
-            'FileHelper.stub'        => app_path('Helpers/FileHelper.php'),
+            'AuthController.stub' => app_path('Http/Controllers/Api/Auth/AuthController.php'),
+            'AuthService.stub' => app_path('Services/Api/Auth/AuthService.php'),
+            'AuthRepository.stub' => app_path('Repositories/Api/Auth/AuthRepository.php'),
+            'RegisterRequest.stub' => app_path('Http/Requests/Auth/RegisterRequest.php'),
+            'LoginRequest.stub' => app_path('Http/Requests/Auth/LoginRequest.php'),
         ];
 
         foreach ($map as $stubName => $destPath) {
-            $stubPath = __DIR__ . "/../stubs/{$stubName}";
-
-            $this->generateFile($stubPath, $destPath, [
-                '{{namespace}}'            => $this->resolveNamespace($destPath),
-                '{{trait_namespace}}'      => 'App\Traits',
+            $this->generateFile(__DIR__ . "/../stubs/{$stubName}", $destPath, [
+                '{{namespace}}' => $this->resolveNamespace($destPath),
+                '{{trait_namespace}}' => 'App\Traits',
                 '{{repository_namespace}}' => 'App\Repositories\Api\Auth',
-                '{{service_namespace}}'    => 'App\Services\Api\Auth',
-                '{{request_namespace}}'    => 'App\Http\Requests\Auth',
-                '{{helper_namespace}}'     => 'App\Helpers',
+                '{{service_namespace}}' => 'App\Services\Api\Auth',
+                '{{request_namespace}}' => 'App\Http\Requests\Auth',
+                '{{helper_namespace}}' => 'App\Helpers',
             ]);
         }
     }
 
+    /**
+     * Publish the API Response Trait.
+     *
+     * @return void
+     */
+    public function publishApiResponseTrait()
+    {
+        $this->generateFile(
+            __DIR__ . '/../stubs/ApiResponseTrait.stub',
+            app_path('Traits/ApiResponseTrait.php'),
+            ['{{namespace}}' => 'App\Traits']
+        );
+    }
+
+    /**
+     * Publish the File Helper class.
+     *
+     * @return void
+     */
+    public function publishFileHelper()
+    {
+        $this->generateFile(
+            __DIR__ . '/../stubs/FileHelper.stub',
+            app_path('Helpers/FileHelper.php'),
+            ['{{namespace}}' => 'App\Helpers']
+        );
+    }
+
+    /**
+     * Core file generation logic.
+     *
+     * @param string $stubPath
+     * @param string $destPath
+     * @param array $replacements
+     * @return void
+     */
     public function generateFile($stubPath, $destPath, $replacements = [])
     {
-        if (\Illuminate\Support\Facades\File::exists($stubPath)) {
-            \Illuminate\Support\Facades\File::ensureDirectoryExists(dirname($destPath));
-            $content = \Illuminate\Support\Facades\File::get($stubPath);
+        if (File::exists($stubPath)) {
+            File::ensureDirectoryExists(dirname($destPath));
+            $content = File::get($stubPath);
             foreach ($replacements as $search => $replace) {
                 $content = str_replace($search, (string)$replace, $content);
             }
-            \Illuminate\Support\Facades\File::put($destPath, $content);
+            File::put($destPath, $content);
         }
     }
 
+    /**
+     * Resolve PSR-4 namespace based on file path.
+     *
+     * @param string $path
+     * @return string
+     */
     public function resolveNamespace($path)
     {
         $path = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
