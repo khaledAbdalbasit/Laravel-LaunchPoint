@@ -16,24 +16,27 @@
 
 ## 📌 Table of Contents
 
-- [Introduction](#introduction)
-- [Features](#features)
-- [Installation](#installation)
-    - [Install via Composer](#install-via-composer)
-    - [Run LaunchPoint Installer](#run-launchpoint-installer)
-    - [Installation Wizard](#installation-wizard)
-        - [Step 1 — Ensure API Setup](#step-1-ensure-api-setup)
-        - [Step 2 — Authentication System](#step-2-authentication-system)
-        - [Step 3 — Optional Components](#step-3-optional-components)
-        - [Step 4 — Publish Configuration](#step-4-publish-configuration)
-- [Example Installation](#example-installation)
-- [Generated Project Structure](#generated-project-structure)
-- [Example API Response](#example-api-response)
-- [Requirements](#requirements)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [License](#license)
-- [Author](#author)
+* [Introduction](#introduction)
+* [Features](#features)
+* [Installation](#installation)
+
+    * [Install via Composer](#install-via-composer)
+    * [Run LaunchPoint Installer](#run-launchpoint-installer)
+    * [Installation Wizard](#installation-wizard)
+
+        * [Step 1 — Ensure API Setup](#step-1-ensure-api-setup)
+        * [Step 2 — Authentication System](#step-2-authentication-system)
+        * [Step 3 — Optional Components](#step-3-optional-components)
+        * [Step 4 — Publish Configuration](#step-4-publish-configuration)
+* [LaunchPoint Artisan Commands](#launchpoint-artisan-commands)
+* [Example Installation](#example-installation)
+* [Generated Project Structure](#generated-project-structure)
+* [Example API Response](#example-api-response)
+* [Requirements](#requirements)
+* [Roadmap](#roadmap)
+* [Contributing](#contributing)
+* [License](#license)
+* [Author](#author)
 
 ---
 
@@ -43,11 +46,11 @@
 
 It provides an interactive scaffolding system that installs essential backend architecture components including:
 
-- Authentication System
-- Service Layer
-- Repository Layer
-- File Helpers
-- API Response Traits
+* Authentication System
+* Service Layer
+* Repository Layer
+* File Helpers
+* API Response Traits
 
 LaunchPoint helps developers **start building production-ready APIs within seconds instead of hours.**
 
@@ -55,14 +58,14 @@ LaunchPoint helps developers **start building production-ready APIs within secon
 
 ## Features
 
-- Interactive installation wizard
-- Automatic Laravel API setup
-- Clean architecture scaffolding
-- Authentication system with OTP support
-- File handling utilities
-- Standardized API responses
-- Modular installation
-- Laravel 11+ ready
+* Interactive installation wizard
+* Automatic Laravel API setup
+* Clean architecture scaffolding
+* Authentication system with OTP support
+* File handling utilities
+* Standardized API responses
+* Modular installation
+* Laravel 11+ ready
 
 ---
 
@@ -72,90 +75,128 @@ LaunchPoint helps developers **start building production-ready APIs within secon
 
 ```bash
 composer require khaledabdalbasit/launchpoint
-Run LaunchPoint Installer
+```
+
+### Run LaunchPoint Installer
+
+```bash
 php artisan launchpoint:install
+```
 
-Launches the interactive installation wizard.
+Launches the interactive installation wizard.  Choose whether to install Authentication, FileHelper, ApiResponseTrait, etc.
 
-Choose whether to install Authentication, FileHelper, ApiResponseTrait, etc.
+### Installation Wizard
 
-Installation Wizard Steps
-Step 1 — Ensure API Setup
+#### Step 1 — Ensure API Setup
 
-Checks if routes/api.php exists.
+Checks if `routes/api.php` exists. If not, runs automatically:
 
-If not, runs automatically:
-
+```bash
 php artisan install:api
-Step 2 — Authentication System
+```
+
+#### Step 2 — Authentication System
 
 Installs:
 
-AuthController
+* `AuthController`
+* `LoginRequest`
+* `RegisterRequest`
+* `AuthService`
+* `UserResource`
+* OTP integration
+* `FileHelper`
+* `ApiResponseTrait`
 
-LoginRequest
+#### Step 3 — Optional Components
 
-RegisterRequest
+* **FileHelper**
 
-AuthService
-
-UserResource
-
-OTP integration
-
-FileHelper
-
-ApiResponseTrait
-
-Step 3 — Optional Components
-
-FileHelper:
-
+```bash
 php artisan launchpoint:install-filehelper
+```
 
-ApiResponseTrait:
+* **ApiResponseTrait**
 
+```bash
 php artisan launchpoint:install-apiresponse
-Step 4 — Publish Configuration
+```
+
+#### Step 4 — Publish Configuration
+
+```bash
 php artisan vendor:publish --tag=launchpoint-config
+```
 
-Publishes config/launchpoint.php.
+Publishes `config/launchpoint.php`.
 
-LaunchPoint Artisan Commands
-1️⃣ Make Controller
+---
+
+## LaunchPoint Artisan Commands
+
+1️⃣ **Make Controller**
+
+```bash
 php artisan launchpoint:make-controller {name} {--service=ServiceName}
+```
 
 Creates a controller, optionally connected to a Service.
 
 Example:
 
+```bash
 php artisan launchpoint:make-controller UserController --service=UserService
-2️⃣ Make Service
+```
+
+2️⃣ **Make Service**
+
+```bash
 php artisan launchpoint:make-service {name} {--model=ModelName}
+```
 
 Creates a service, optionally tied to a Model.
 
 Example:
 
+```bash
 php artisan launchpoint:make-service UserService --model=User
-3️⃣ Make Repository
+```
+
+3️⃣ **Make Repository**
+
+```bash
 php artisan launchpoint:make-repository {name} {--model=ModelName}
+```
 
 Creates a repository, optionally tied to a Model.
 
 Example:
 
+```bash
 php artisan launchpoint:make-repository UserRepository --model=User
-Example Installation
+```
+
+---
+
+## Example Installation
+
+```bash
 php artisan launchpoint:install
+```
 
-LaunchPoint Installation Wizard
+LaunchPoint Installation Wizard:
 
+```
 Do you want to install the Authentication Scaffolding? (yes/no) [yes]:
 ✔ Auth system installed
-
 Installation completed successfully.
-Generated Project Structure
+```
+
+---
+
+## Generated Project Structure
+
+```
 app
  ├── Helpers
  │   └── FileHelper.php
@@ -178,14 +219,21 @@ app
                └── RegisterRequest.php
 Repositories/
  └── ExampleRepository.php
-Example API Response
+```
 
-Using ApiResponseTrait:
+---
 
+## Example API Response
+
+Using `ApiResponseTrait`:
+
+```php
 return $this->apiResponse($data, 'User logged in successfully');
+```
 
 Response:
 
+```json
 {
     "status": true,
     "message": "User logged in successfully",
@@ -193,41 +241,44 @@ Response:
         "user": {}
     }
 }
-Requirements
+```
 
-PHP 8.1+
+---
 
-Laravel 11+
+## Requirements
 
-Roadmap
+* PHP 8.1+
+* Laravel 11+
 
-Repository scaffolding generator
+---
 
-Service generator
+## Roadmap
 
-API resource generator
+* Repository scaffolding generator
+* Service generator
+* API resource generator
+* Role & Permission scaffolding
+* API versioning support
+* Swagger documentation generator
 
-Role & Permission scaffolding
+---
 
-API versioning support
+## Contributing
 
-Swagger documentation generator
+* Fork the repository
+* Create a feature branch
+* Commit your changes
+* Open a Pull Request
 
-Contributing
+---
 
-Fork the repository
-
-Create a feature branch
-
-Commit your changes
-
-Open a Pull Request
-
-License
+## License
 
 MIT License © Khaled Abdelbasit
 
-Author
+---
+
+## Author
 
 Khaled Abdelbasit
 Backend Engineer specializing in Laravel architecture and API systems.
