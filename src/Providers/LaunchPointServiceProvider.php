@@ -5,6 +5,7 @@ namespace KhaledAbdalbasit\LaunchPoint\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\File;
 use KhaledAbdalbasit\LaunchPoint\Commands\InstallLaunchPoint;
+use KhaledAbdalbasit\LaunchPoint\Commands\MakeControllerCommand;
 use KhaledAbdalbasit\LaunchPoint\Commands\MakeRepositoryCommand;
 use KhaledAbdalbasit\LaunchPoint\Commands\MakeServiceCommand;
 
@@ -37,6 +38,7 @@ class LaunchPointServiceProvider extends ServiceProvider
                 InstallLaunchPoint::class,
                 MakeServiceCommand::class,
                 MakeRepositoryCommand::class,
+                MakeControllerCommand::class
             ]);
 
             $this->registerPublishables();
