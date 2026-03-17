@@ -1,0 +1,19 @@
+name: Auto Merge PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Enable Auto Merge
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          merge-method: squash
