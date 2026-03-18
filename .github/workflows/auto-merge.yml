@@ -1,13 +1,13 @@
 name: LaunchPoint CI/CD
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
   push:
     branches:
       - main
     tags:
       - 'v*.*.*'
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   auto-merge:
@@ -22,7 +22,23 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Enable Auto Merge
+      - name: Conditional Merge
+        run: |
+          if [ "${GITHUB_ACTOR}" = "khaledAbdalbasit" ]; then
+            echo "You pushed, merge directly"
+            git config --global user.name "Khaled Abdalbasit"
+            git config --global user.email "YOUR_EMAIL@example.com"
+            git checkout main
+            git pull origin main
+            git merge ${{ github.ref_name }} --squash -m "Direct merge by Khaled"
+            git push origin main
+          else
+            echo "Someone else pushed, enable auto-merge on PR"
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+
+      - name: Enable Auto Merge for PR
+        if: github.actor != 'khaledAbdalbasit'
         uses: peter-evans/enable-pull-request-automerge@v3
         with:
           merge-method: squash
