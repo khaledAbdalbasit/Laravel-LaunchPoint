@@ -1,8 +1,13 @@
-name: Auto Merge PR
+name: LaunchPoint CI/CD
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*.*.*'
 
 jobs:
   auto-merge:
@@ -23,3 +28,31 @@ jobs:
           merge-method: squash
           token: ${{ secrets.GITHUB_TOKEN }}
           pull-request-number: ${{ github.event.pull_request.number }}
+
+  publish-packagist:
+    runs-on: ubuntu-latest
+    needs: auto-merge
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, json
+
+      - name: Install Composer
+        run: composer install --no-dev --prefer-dist --optimize-autoloader
+
+      - name: Publish to Packagist
+        env:
+          PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_API_TOKEN }}
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"repository\":{\"url\":\"https://github.com/khaledAbdalbasit/Laravel-LaunchPoint\"}}" \
+            "https://packagist.org/api/update-package?username=khaledabdalbasit&apiToken=${PACKAGIST_TOKEN}"
