@@ -28,14 +28,15 @@ jobs:
             echo "You pushed, merge directly"
             git config --global user.name "Khaled Abdalbasit"
             git config --global user.email "YOUR_EMAIL@example.com"
+            git fetch origin main
             git checkout main
-            git pull origin main
-            git merge ${{ github.ref_name }} --squash -m "Direct merge by Khaled"
+            git merge --squash ${{ github.ref_name }} -m "Direct merge by Khaled"
             git push origin main
           else
             echo "Someone else pushed, enable auto-merge on PR"
         env:
           GITHUB_ACTOR: ${{ github.actor }}
+        shell: bash
 
       - name: Enable Auto Merge for PR
         if: github.actor != 'khaledAbdalbasit'
