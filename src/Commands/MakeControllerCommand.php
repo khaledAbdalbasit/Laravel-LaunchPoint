@@ -23,14 +23,14 @@ class MakeControllerCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'launchpoint:make-controller {name} {--service=} {--model=} {--all|a}';
+    protected $signature = 'launchpoint:make-controller {name} {--service=} {--model=} {--all} {--a}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Create a controller (use --all to auto-derive Service and Model names)';
+    protected $description = 'Create a controller (use --all or --a to auto-derive Service and Model names)';
 
     /**
      * Execute the console command.
@@ -42,7 +42,7 @@ class MakeControllerCommand extends Command
         $name    = $this->argument('name');
         $service = $this->option('service');
         $model   = $this->option('model');
-        $all     = $this->option('all');
+        $all     = $this->option('all') || $this->option('a');
 
         // Logic for --all flag shortcut
         if ($all) {
