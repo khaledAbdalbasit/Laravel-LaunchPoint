@@ -1,12 +1,16 @@
 <?php
 
-namespace KhaledAbdalbasit\LaunchPoint\Commands;
+namespace LaunchPoint\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
+use LaunchPoint\Traits\CanDisplayLogo;
+
 class MakeRepositoryCommand extends Command
 {
+    use CanDisplayLogo;
+
     protected $signature = 'launchpoint:make-repository {name} {--model=}';
 
     protected $description = 'Create a new repository class';

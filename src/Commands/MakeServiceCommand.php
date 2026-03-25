@@ -1,10 +1,12 @@
 <?php
 
-namespace KhaledAbdalbasit\LaunchPoint\Commands;
+namespace LaunchPoint\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+
+use LaunchPoint\Traits\CanDisplayLogo;
 
 /**
  * Class MakeServiceCommand
@@ -17,6 +19,8 @@ use Illuminate\Support\Str;
  */
 class MakeServiceCommand extends Command
 {
+    use CanDisplayLogo;
+
     /**
      * The name and signature of the console command.
      *

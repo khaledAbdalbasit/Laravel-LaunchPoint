@@ -1,13 +1,13 @@
 <?php
 
-namespace KhaledAbdalbasit\LaunchPoint\Providers;
+namespace LaunchPoint\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\File;
-use KhaledAbdalbasit\LaunchPoint\Commands\InstallLaunchPoint;
-use KhaledAbdalbasit\LaunchPoint\Commands\MakeControllerCommand;
-use KhaledAbdalbasit\LaunchPoint\Commands\MakeRepositoryCommand;
-use KhaledAbdalbasit\LaunchPoint\Commands\MakeServiceCommand;
+use LaunchPoint\Commands\InstallLaunchPoint;
+use LaunchPoint\Commands\MakeControllerCommand;
+use LaunchPoint\Commands\MakeRepositoryCommand;
+use LaunchPoint\Commands\MakeServiceCommand;
 
 /**
  * Class LaunchPointServiceProvider

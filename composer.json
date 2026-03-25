@@ -1,5 +1,5 @@
 {
-    "name": "khaledabdalbasit/launchpoint",
+    "name": "khaled110/launchpoint",
     "description": "Laravel Starter Kit for API",
     "type": "library",
     "license": "MIT",
@@ -9,13 +9,13 @@
     },
     "autoload": {
         "psr-4": {
-            "KhaledAbdalbasit\\LaunchPoint\\": "src/"
+            "LaunchPoint\\": "src/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "KhaledAbdalbasit\\LaunchPoint\\Providers\\LaunchPointServiceProvider"
+                "LaunchPoint\\Providers\\LaunchPointServiceProvider"
             ]
         }
     },

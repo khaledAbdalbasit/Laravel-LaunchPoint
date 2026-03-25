@@ -1,9 +1,11 @@
 <?php
 
-namespace KhaledAbdalbasit\LaunchPoint\Commands;
+namespace LaunchPoint\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+
+use LaunchPoint\Traits\CanDisplayLogo;
 
 /**
  * Class InstallLaunchPoint
@@ -11,6 +13,8 @@ use Illuminate\Support\Facades\File;
  */
 class InstallLaunchPoint extends Command
 {
+    use CanDisplayLogo;
+
     /**
      * @var string
      */
@@ -28,12 +32,13 @@ class InstallLaunchPoint extends Command
      */
     public function handle()
     {
+        $this->displayLogo();
         $this->components->info('LaunchPoint Installation Wizard');
 
         $this->ensureApiIsInstalled();
 
-        /** @var \KhaledAbdalbasit\LaunchPoint\Providers\LaunchPointServiceProvider $provider */
-        $provider = $this->laravel->getProvider(\KhaledAbdalbasit\LaunchPoint\Providers\LaunchPointServiceProvider::class);
+        /** @var \LaunchPoint\Providers\LaunchPointServiceProvider $provider */
+        $provider = $this->laravel->getProvider(\LaunchPoint\Providers\LaunchPointServiceProvider::class);
 
         if (!$provider) {
             $this->error('Provider not found.');
@@ -61,7 +66,7 @@ class InstallLaunchPoint extends Command
 
         // Always publish config
         $this->callSilent('vendor:publish', [
-            '--provider' => 'KhaledAbdalbasit\LaunchPoint\Providers\LaunchPointServiceProvider',
+            '--provider' => 'LaunchPoint\Providers\LaunchPointServiceProvider',
             '--tag' => 'launchpoint-config',
             '--force' => true
         ]);
