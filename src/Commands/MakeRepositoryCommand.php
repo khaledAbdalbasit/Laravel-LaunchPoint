@@ -17,8 +17,6 @@ class MakeRepositoryCommand extends Command
 
     public function handle()
     {
-        $this->displayLogo();
-
         $name = $this->argument('name');
         $model = $this->option('model');
 

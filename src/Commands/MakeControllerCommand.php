@@ -39,8 +39,6 @@ class MakeControllerCommand extends Command
      */
     public function handle()
     {
-        $this->displayLogo();
-        
         $name    = $this->argument('name');
         $service = $this->option('service');
         $model   = $this->option('model');

@@ -13,11 +13,15 @@ trait CanDisplayLogo
     {
         $logo = <<<EOT
 <fg=cyan;options=bold>
-       / \
-      /   \      LaunchPoint
-     /_____\     ───────────
-     |     |     Starter Kit
-     |_____|
+           !
+           ^
+          / \
+         /===\
+        |  L  |
+        |  P  |
+        |_____|  LaunchPoint
+         / V \   ───────────
+        V     V  Starter Kit
 </>
 EOT;
         $this->line($logo);
