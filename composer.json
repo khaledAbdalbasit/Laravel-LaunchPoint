@@ -12,6 +12,11 @@
             "LaunchPoint\\": "src/"
         }
     },
+    "scripts": {
+        "post-package-install": [
+            "LaunchPoint\\Traits\\CanDisplayLogo::displayWelcomeMessage"
+        ]
+    },
     "extra": {
         "laravel": {
             "providers": [
