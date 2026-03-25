@@ -18,14 +18,14 @@ class MakeControllerCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'launchpoint:make-controller {name} {--service=} {--model=}';
+    protected $signature = 'launchpoint:make-controller {name} {--service=} {--model=} {--all|a}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Create a controller with optional service injection (auto-creates Service + Repository)';
+    protected $description = 'Create a controller (use --all to auto-derive Service and Model names)';
 
     /**
      * Execute the console command.
@@ -37,6 +37,25 @@ class MakeControllerCommand extends Command
         $name    = $this->argument('name');
         $service = $this->option('service');
         $model   = $this->option('model');
+        $all     = $this->option('all');
+
+        // Logic for --all flag shortcut
+        if ($all) {
+            // Get base name (e.g. ProductController -> Product, Product -> Product)
+            $baseForDeriving = basename(str_replace(['/', '\\'], '/', $name));
+            if (str_ends_with($baseForDeriving, 'Controller')) {
+                $baseForDeriving = substr($baseForDeriving, 0, -10);
+            }
+
+            // Derive defaults if not explicitly provided
+            $service = $service ?: "{$baseForDeriving}Service";
+            $model   = $model   ?: $baseForDeriving;
+        }
+
+        // Ensure name ends with Controller for consistent filing
+        if (!str_ends_with($name, 'Controller')) {
+            $name .= 'Controller';
+        }
 
         // If a service is specified but does not exist, auto-generate it with its repository
         if ($service) {
