@@ -13,18 +13,31 @@ trait CanDisplayLogo
     {
         $logo = <<<EOT
 <fg=cyan;options=bold>
-           !
-           ^
-          / \
-         /===\
-        |  L  |  LaunchPoint
-        |  P  |  ───────────
-        |_____|  Starter Kit
-         / V \  
-        V     V  
+       / \
+      /   \      LaunchPoint
+     /  o  \     ───────────
+    /_______\    Starter Kit
+      |   |
+      |___|
 </>
 EOT;
         $this->line($logo);
         $this->newLine();
+    }
+
+    /**
+     * Static method for composer hooks or manual calls.
+     */
+    public static function displayWelcomeMessage()
+    {
+        $logo = "
+       / \
+      /   \      LaunchPoint
+     /  o  \     ───────────
+    /_______\    Starter Kit
+      |   |
+      |___|
+";
+        echo $logo . PHP_EOL;
     }
 }
