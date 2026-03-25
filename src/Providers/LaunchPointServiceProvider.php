@@ -34,6 +34,8 @@ class LaunchPointServiceProvider extends ServiceProvider
     public function boot()
     {
         if ($this->app->runningInConsole()) {
+            $this->showWelcomeMessageOnce();
+
             $this->commands([
                 InstallLaunchPoint::class,
                 MakeServiceCommand::class,
@@ -42,6 +44,21 @@ class LaunchPointServiceProvider extends ServiceProvider
             ]);
 
             $this->registerPublishables();
+        }
+    }
+
+    /**
+     * Show the welcome logo once during the first discovery/boot.
+     *
+     * @return void
+     */
+    protected function showWelcomeMessageOnce()
+    {
+        $flagFile = storage_path('framework/launchpoint_welcome_shown');
+
+        if (!File::exists($flagFile)) {
+            \LaunchPoint\Traits\CanDisplayLogo::displayWelcomeMessage();
+            File::put($flagFile, (string)time());
         }
     }
 
