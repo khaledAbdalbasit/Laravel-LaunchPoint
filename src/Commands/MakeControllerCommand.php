@@ -18,14 +18,14 @@ class MakeControllerCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'launchpoint:make-controller {name} {--service=}';
+    protected $signature = 'launchpoint:make-controller {name} {--service=} {--model=}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Create a controller with optional service injection';
+    protected $description = 'Create a controller with optional service injection (auto-creates Service + Repository)';
 
     /**
      * Execute the console command.
@@ -34,15 +34,20 @@ class MakeControllerCommand extends Command
      */
     public function handle()
     {
-        $name = $this->argument('name');
+        $name    = $this->argument('name');
         $service = $this->option('service');
+        $model   = $this->option('model');
 
         // If a service is specified but does not exist, auto-generate it with its repository
         if ($service) {
             $servicePath = app_path("Services/{$service}.php");
             if (!File::exists($servicePath)) {
-                $this->call('launchpoint:make-service', ['name' => $service]);
-                $this->info("Service {$service} auto-generated with its Repository.");
+                $args = ['name' => $service];
+                if ($model) {
+                    $args['--model'] = $model;
+                }
+                $this->call('launchpoint:make-service', $args);
+                $this->info("Service [{$service}] and its Repository auto-generated.");
             }
         }
 

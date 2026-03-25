@@ -4,12 +4,16 @@ namespace KhaledAbdalbasit\LaunchPoint\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 /**
  * Class MakeServiceCommand
  *
  * Artisan command to generate a new Service class.
- * Supports optional model injection for standard CRUD operations.
+ * When --model is provided, automatically creates a matching Repository
+ * and generates a Service that delegates all CRUD operations to it.
+ *
+ * Chain: Controller → Service → Repository → Model
  */
 class MakeServiceCommand extends Command
 {
@@ -25,7 +29,7 @@ class MakeServiceCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Create a new service class with optional model injection';
+    protected $description = 'Create a new service class (auto-creates matching Repository when --model is given)';
 
     /**
      * Execute the console command.
@@ -34,7 +38,7 @@ class MakeServiceCommand extends Command
      */
     public function handle()
     {
-        $name = $this->argument('name');
+        $name  = $this->argument('name');
         $model = $this->option('model');
 
         // Determine the path for the service class
@@ -42,7 +46,7 @@ class MakeServiceCommand extends Command
 
         // Prevent overwriting an existing service
         if (File::exists($path)) {
-            $this->error("Service {$name} already exists.");
+            $this->error("Service [{$name}] already exists.");
             return;
         }
 
@@ -51,17 +55,58 @@ class MakeServiceCommand extends Command
             File::makeDirectory(app_path('Services'), 0755, true);
         }
 
-        // Choose the stub based on whether a model is provided
-        $stub = $model ? $this->modelStub($name, $model) : $this->basicStub($name);
+        if ($model) {
+            // Derive repository name: e.g. UserService → UserRepository
+            $repoName = $this->deriveRepositoryName($name);
+
+            // Auto-create the repository if it doesn't exist
+            $repoPath = app_path("Repositories/{$repoName}.php");
+            if (!File::exists($repoPath)) {
+                $this->call('launchpoint:make-repository', [
+                    'name'    => $repoName,
+                    '--model' => $model,
+                ]);
+                $this->info("Repository [{$repoName}] created for model [{$model}].");
+            }
+
+            $stub = $this->repositoryStub($name, $repoName);
+        } else {
+            $stub = $this->basicStub($name);
+        }
 
         // Write the service class to disk
         File::put($path, $stub);
 
-        $this->info("Service {$name} created successfully.");
+        $this->info("Service [{$name}] created successfully.");
     }
 
     /**
-     * Generate a basic service stub without a model.
+     * Derive the Repository class name from the Service name.
+     * Examples:
+     *   UserService   → UserRepository
+     *   ProductService → ProductRepository
+     *   Auth/AuthService → Auth/AuthRepository  (preserves sub-paths)
+     *
+     * @param string $serviceName
+     * @return string
+     */
+    protected function deriveRepositoryName(string $serviceName): string
+    {
+        // Handle sub-directory paths like "Auth/AuthService"
+        $base = basename(str_replace('\\', '/', $serviceName));
+        $dir  = ltrim(str_replace(basename(str_replace('\\', '/', $serviceName)), '', str_replace('\\', '/', $serviceName)), '/\\');
+
+        if (Str::endsWith($base, 'Service')) {
+            $repoBase = Str::replaceLast('Service', 'Repository', $base);
+        } else {
+            $repoBase = $base . 'Repository';
+        }
+
+        return $dir ? $dir . '/' . $repoBase : $repoBase;
+    }
+
+    /**
+     * Generate a basic service stub without any dependency.
      *
      * @param string $class
      * @return string
@@ -86,20 +131,23 @@ PHP;
     }
 
     /**
-     * Generate a service stub connected to a model with CRUD methods.
+     * Generate a service stub that injects a Repository (Repository Pattern).
+     * The Service delegates all CRUD operations to the Repository.
      *
-     * @param string \$class
-     * @param string \$model
+     * @param string \$class      Service class name
+     * @param string \$repoClass  Repository class name
      * @return string
      */
-    protected function modelStub($class, $model)
+    protected function repositoryStub(string $class, string $repoClass)
     {
         return <<<PHP
 <?php
 
 namespace App\Services;
 
-use App\Models\\{$model};
+use App\Repositories\\{$repoClass};
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Exception;
@@ -107,100 +155,81 @@ use Exception;
 /**
  * Class {$class}
  *
- * Service layer responsible for handling business logic for {$model}.
+ * Service layer generated by LaunchPoint.
+ * Delegates all data operations to {$repoClass}.
+ *
+ * Chain: Controller → {$class} → {$repoClass} → Model
  */
 class {$class}
 {
     /**
-     * The model instance.
+     * The injected repository instance.
      *
-     * @var {$model}
+     * @var {$repoClass}
      */
-    protected {$model} \$model;
+    protected {$repoClass} \$repository;
 
     /**
      * {$class} constructor.
      *
-     * @param {$model} \$model
+     * @param {$repoClass} \$repository
      */
-    public function __construct({$model} \$model)
+    public function __construct({$repoClass} \$repository)
     {
-        \$this->model = \$model;
+        \$this->repository = \$repository;
     }
 
     /**
      * Retrieve all records.
      *
-     * @return \\Illuminate\Database\Eloquent\Collection
+     * @return Collection
      *
      * @throws QueryException
      */
-    public function getAll()
+    public function getAll(): Collection
     {
-        try {
-            return \$this->model->all();
-        } catch (QueryException \$e) {
-            throw \$e;
-        }
+        return \$this->repository->all();
     }
 
     /**
      * Find a record by ID or throw ModelNotFoundException.
      *
      * @param int \$id
-     * @return {$model}
+     * @return Model
      *
      * @throws ModelNotFoundException
      */
-    public function findOrFail(\$id)
+    public function findOrFail(int \$id): Model
     {
-        \$model = \$this->model->find(\$id);
-
-        if (!\$model) {
-            throw new ModelNotFoundException("{$model} not found.");
-        }
-
-        return \$model;
+        return \$this->repository->findOrFail(\$id);
     }
 
     /**
      * Create a new record.
      *
      * @param array \$data
-     * @return {$model}
+     * @return Model
      *
      * @throws QueryException
      */
-    public function create(array \$data)
+    public function create(array \$data): Model
     {
-        try {
-            return \$this->model->create(\$data);
-        } catch (QueryException \$e) {
-            throw \$e;
-        }
+        return \$this->repository->create(\$data);
     }
 
     /**
      * Update a record by ID.
      *
-     * @param int \$id
+     * @param int   \$id
      * @param array \$data
-     * @return {$model}
+     * @return Model
      *
      * @throws ModelNotFoundException
      * @throws QueryException
      */
-    public function update(\$id, array \$data)
+    public function update(int \$id, array \$data): Model
     {
-        \$model = \$this->findOrFail(\$id);
-
-        try {
-            \$model->update(\$data);
-        } catch (QueryException \$e) {
-            throw \$e;
-        }
-
-        return \$model;
+        return \$this->repository->update(\$id, \$data);
     }
 
     /**
@@ -212,15 +241,9 @@ class {$class}
      * @throws ModelNotFoundException
      * @throws QueryException
      */
-    public function delete(\$id)
+    public function delete(int \$id): bool|null
     {
-        \$model = \$this->findOrFail(\$id);
-
-        try {
-            return \$model->delete();
-        } catch (QueryException \$e) {
-            throw \$e;
-        }
+        return \$this->repository->delete(\$id);
     }
 }
 PHP;

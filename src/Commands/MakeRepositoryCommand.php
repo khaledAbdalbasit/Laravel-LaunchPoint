@@ -114,13 +114,13 @@ class {$class}
      */
     public function findOrFail(\$id)
     {
-        \$model = \$this->model->find(\$id);
+        \$record = \$this->model->find(\$id);
 
-        if (!\$model) {
-            throw new ModelNotFoundException("{$model} not found.");
+        if (!\$record) {
+            throw new ModelNotFoundException(class_basename(\$this->model) . " not found.");
         }
 
-        return \$model;
+        return \$record;
     }
 
     /**
