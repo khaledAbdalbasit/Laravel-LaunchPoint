@@ -5,6 +5,9 @@ namespace LaunchPoint\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
+use LaunchPoint\Traits\CanDisplayLogo;
+use Illuminate\Support\Str;
+
 /**
  * Class MakeControllerCommand
  *
@@ -13,6 +16,8 @@ use Illuminate\Support\Facades\File;
  */
 class MakeControllerCommand extends Command
 {
+    use CanDisplayLogo;
+
     /**
      * The name and signature of the console command.
      *
@@ -34,6 +39,8 @@ class MakeControllerCommand extends Command
      */
     public function handle()
     {
+        $this->displayLogo();
+        
         $name    = $this->argument('name');
         $service = $this->option('service');
         $model   = $this->option('model');

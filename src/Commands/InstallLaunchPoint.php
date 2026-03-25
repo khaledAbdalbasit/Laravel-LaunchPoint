@@ -5,12 +5,16 @@ namespace LaunchPoint\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
+use LaunchPoint\Traits\CanDisplayLogo;
+
 /**
  * Class InstallLaunchPoint
  * * Interactive command to scaffold LaunchPoint components based on user selection.
  */
 class InstallLaunchPoint extends Command
 {
+    use CanDisplayLogo;
+
     /**
      * @var string
      */
@@ -28,6 +32,7 @@ class InstallLaunchPoint extends Command
      */
     public function handle()
     {
+        $this->displayLogo();
         $this->components->info('LaunchPoint Installation Wizard');
 
         $this->ensureApiIsInstalled();

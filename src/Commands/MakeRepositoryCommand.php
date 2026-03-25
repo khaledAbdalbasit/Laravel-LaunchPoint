@@ -5,14 +5,20 @@ namespace LaunchPoint\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
+use LaunchPoint\Traits\CanDisplayLogo;
+
 class MakeRepositoryCommand extends Command
 {
+    use CanDisplayLogo;
+
     protected $signature = 'launchpoint:make-repository {name} {--model=}';
 
     protected $description = 'Create a new repository class';
 
     public function handle()
     {
+        $this->displayLogo();
+
         $name = $this->argument('name');
         $model = $this->option('model');
 
