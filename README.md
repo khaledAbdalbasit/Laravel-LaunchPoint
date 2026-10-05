@@ -134,50 +134,77 @@ Publishes `config/launchpoint.php`.
 
 ## LaunchPoint Artisan Commands
 
-LaunchPoint comes with powerful scaffolding generators that automatically write full CRUD boilerplate and link your architecture layers together.
+LaunchPoint comes with powerful scaffolding generators that automatically write full CRUD boilerplate and link your architecture layers together. Below is a detailed breakdown of each command and its available flags.
 
-1️⃣ **Make Controller**
+---
+
+### 1️⃣ Make Controller
+
+Generates a new API Controller. Can be standalone or automatically wired to a Service.
 
 ```bash
-php artisan launchpoint:make-controller {name} {--service=ServiceName} {--model=ModelName} {--all|-a}
+php artisan launchpoint:make-controller {name} [options]
 ```
 
-Creates a controller. 
-- **`--service`**: Automatically injects the specified service into the controller.
-- **`--all` or `-a` (🔥 Magic Flag)**: This is the most powerful command. It automatically derives and generates the Controller, Service, and Repository, linking them all together with full CRUD operations ready to go!
+**Available Options:**
+* **`--service=ServiceName`**: Injects a specific Service class into the Controller's constructor. If the Service doesn't exist, it will auto-generate it.
+* **`--model=ModelName`**: Specifies the associated Model (best used alongside `--all`).
+* **`--all` or `-a` (🔥 Magic Flag)**: The ultimate time-saver! It takes the base name of your Controller, derives the Service and Model names, and generates all of them simultaneously with full CRUD operations wired up.
 
-Example:
+**Examples:**
 ```bash
+# Basic Controller
+php artisan launchpoint:make-controller UserController
+
+# Controller with a specific service
+php artisan launchpoint:make-controller UserController --service=UserAuthService
+
+# Magic Generation (Creates UserController, UserService, and UserRepository with CRUD)
 php artisan launchpoint:make-controller UserController --all
 ```
-*(This single command generates `UserController`, `UserService`, and `UserRepository` with full CRUD boilerplate!)*
 
-2️⃣ **Make Service**
+---
+
+### 2️⃣ Make Service
+
+Generates a Service class to house your business logic.
 
 ```bash
-php artisan launchpoint:make-service {name} {--model=ModelName}
+php artisan launchpoint:make-service {name} [options]
 ```
 
-Creates a service class. 
-- **`--model`**: When provided, LaunchPoint will **automatically generate the matching Repository** for this model, and set up the Service to delegate all CRUD operations to that Repository.
+**Available Options:**
+* **`--model=ModelName`**: When you provide this flag, LaunchPoint will not only generate the Service, but it will also **automatically generate the matching Repository** for the model. The generated Service will be pre-configured to inject the Repository and delegate all CRUD operations to it.
 
-Example:
+**Examples:**
 ```bash
-php artisan launchpoint:make-service UserService --model=User
+# Basic empty Service
+php artisan launchpoint:make-service PaymentService
+
+# Generates ProductService AND ProductRepository, linked together
+php artisan launchpoint:make-service ProductService --model=Product
 ```
 
-3️⃣ **Make Repository**
+---
+
+### 3️⃣ Make Repository
+
+Generates a Repository class to handle all database operations.
 
 ```bash
-php artisan launchpoint:make-repository {name} {--model=ModelName}
+php artisan launchpoint:make-repository {name} [options]
 ```
 
-Creates a repository pattern class.
-- **`--model`**: Generates full CRUD methods (all, findOrFail, create, update, delete) tailored to the specified model.
+**Available Options:**
+* **`--model=ModelName`**: When provided, the Repository won't be empty. It will be generated with **fully implemented CRUD methods** (`all()`, `findOrFail()`, `create()`, `update()`, `delete()`) tailored exactly for the specified Model.
 
-Example:
+**Examples:**
 ```bash
-php artisan launchpoint:make-repository UserRepository --model=User
+# Basic empty Repository
+php artisan launchpoint:make-repository ReportRepository
+
+# Generates OrderRepository with full CRUD methods for the Order model
+php artisan launchpoint:make-repository OrderRepository --model=Order
 ```
 
 ---
