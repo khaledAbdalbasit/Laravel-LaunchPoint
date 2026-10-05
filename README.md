@@ -58,13 +58,13 @@ LaunchPoint helps developers **start building production-ready APIs within secon
 
 ## Features
 
+* **🔥 Magic Scaffolding (`--all`)**: Generate Controller, Service, and Repository layers in one command.
+* **⚡ Full CRUD Boilerplate**: Generated classes come with fully working CRUD code (index, show, store, update, destroy).
+* **🏗️ Clean Architecture**: Enforces a strict `Controller -> Service -> Repository -> Model` chain.
 * Interactive installation wizard
 * Automatic Laravel API setup
-* Clean architecture scaffolding
-* Authentication system with OTP support
-* File handling utilities
-* Standardized API responses
-* Modular installation
+* Authentication system with OTP support (`fisal/laravel-otp`)
+* File handling utilities & Standardized API responses
 * Laravel 11+ ready
 
 ---
@@ -134,19 +134,23 @@ Publishes `config/launchpoint.php`.
 
 ## LaunchPoint Artisan Commands
 
+LaunchPoint comes with powerful scaffolding generators that automatically write full CRUD boilerplate and link your architecture layers together.
+
 1️⃣ **Make Controller**
 
 ```bash
-php artisan launchpoint:make-controller {name} {--service=ServiceName}
+php artisan launchpoint:make-controller {name} {--service=ServiceName} {--model=ModelName} {--all|-a}
 ```
 
-Creates a controller, optionally connected to a Service.
+Creates a controller. 
+- **`--service`**: Automatically injects the specified service into the controller.
+- **`--all` or `-a` (🔥 Magic Flag)**: This is the most powerful command. It automatically derives and generates the Controller, Service, and Repository, linking them all together with full CRUD operations ready to go!
 
 Example:
-
 ```bash
-php artisan launchpoint:make-controller UserController --service=UserService
+php artisan launchpoint:make-controller UserController --all
 ```
+*(This single command generates `UserController`, `UserService`, and `UserRepository` with full CRUD boilerplate!)*
 
 2️⃣ **Make Service**
 
@@ -154,10 +158,10 @@ php artisan launchpoint:make-controller UserController --service=UserService
 php artisan launchpoint:make-service {name} {--model=ModelName}
 ```
 
-Creates a service, optionally tied to a Model.
+Creates a service class. 
+- **`--model`**: When provided, LaunchPoint will **automatically generate the matching Repository** for this model, and set up the Service to delegate all CRUD operations to that Repository.
 
 Example:
-
 ```bash
 php artisan launchpoint:make-service UserService --model=User
 ```
@@ -168,10 +172,10 @@ php artisan launchpoint:make-service UserService --model=User
 php artisan launchpoint:make-repository {name} {--model=ModelName}
 ```
 
-Creates a repository, optionally tied to a Model.
+Creates a repository pattern class.
+- **`--model`**: Generates full CRUD methods (all, findOrFail, create, update, delete) tailored to the specified model.
 
 Example:
-
 ```bash
 php artisan launchpoint:make-repository UserRepository --model=User
 ```
