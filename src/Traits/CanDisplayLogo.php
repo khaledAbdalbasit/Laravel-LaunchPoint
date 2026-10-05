@@ -6,22 +6,23 @@ trait CanDisplayLogo
 {
     /**
      * Display the LaunchPoint logo and header.
+     * Each line uses a single color tag to preserve correct terminal spacing.
      *
      * @return void
      */
     protected function displayLogo()
     {
-        $logo = <<<EOT
-<fg=red;options=bold>    __    __  </>
-<fg=red;options=bold>   /  \  /  \ </>
-<fg=cyan>  /  LP  \   <fg=cyan;options=bold>LaunchPoint</>
-<fg=cyan> /  ______\  <fg=white>──────────────</>
-<fg=cyan>|  |        <fg=gray>Starter Kit</>
-<fg=cyan>|  |______</>
-<fg=cyan> \        /</>
-<fg=cyan>  \______/</>
-EOT;
-        $this->line($logo);
+        $this->line('<fg=red>           !</>');
+        $this->line('<fg=red>           ^</>');
+        $this->line('<fg=cyan>          / \</>');
+        $this->line('<fg=cyan>         /===\</>');
+        $this->line('<fg=cyan>        | LP  |</>   <fg=cyan;options=bold>LaunchPoint</>');
+        $this->line('<fg=cyan>        |     |</>   <fg=white>────────────</>');
+        $this->line('<fg=cyan>        |_____|</>   <fg=gray>Starter Kit</>');
+        $this->line('<fg=red>          / \</>');
+        $this->line('<fg=yellow>         V   V</>');
+        $this->line('<fg=yellow>        ( ( ) )</>');
+        $this->line('<fg=gray>         (  )  )</>');
         $this->newLine();
     }
 
@@ -39,16 +40,17 @@ EOT;
         $bold   = "\033[1m";
         $reset  = "\033[0m";
 
-        $logo = "
-{$red}{$bold}    __    __  {$reset}
-{$red}{$bold}   /  \  /  \ {$reset}
-{$cyan}  /  LP  \   {$cyan}{$bold}LaunchPoint{$reset}
-{$cyan} /  ______\  {$white}──────────────{$reset}
-{$cyan}|  |        {$gray}Starter Kit{$reset}
-{$cyan}|  |______{$reset}
-{$cyan} \        /{$reset}
-{$cyan}  \______/{$reset}
-";
-        echo $logo . PHP_EOL;
+        echo "{$red}           !{$reset}\n";
+        echo "{$red}           ^{$reset}\n";
+        echo "{$cyan}          / \\{$reset}\n";
+        echo "{$cyan}         /===\\{$reset}\n";
+        echo "{$cyan}        | LP  |{$reset}   {$cyan}{$bold}LaunchPoint{$reset}\n";
+        echo "{$cyan}        |     |{$reset}   {$white}────────────{$reset}\n";
+        echo "{$cyan}        |_____|{$reset}   {$gray}Starter Kit{$reset}\n";
+        echo "{$red}          / \\{$reset}\n";
+        echo "{$yellow}         V   V{$reset}\n";
+        echo "{$yellow}        ( ( ) ){$reset}\n";
+        echo "{$gray}         (  )  ){$reset}\n";
+        echo PHP_EOL;
     }
 }
