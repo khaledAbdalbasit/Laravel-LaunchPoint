@@ -12,7 +12,7 @@ trait CanDisplayLogo
     protected function displayLogo()
     {
         $this->line('');
-        $this->line('<fg=cyan>  ██╗      ██████╗ </>');
+        $this->line('<fg=cyan>  ██╗     ███████╗ </>');
         $this->line('<fg=cyan>  ██║     ██╔══██╗</>');
         $this->line('<fg=cyan>  ██║     ██████╔╝</>  <fg=white;options=bold>LaunchPoint</>');
         $this->line('<fg=cyan>  ██║     ██╔═══╝ </>  <fg=gray>────────────────</>');
