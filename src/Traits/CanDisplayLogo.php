@@ -12,17 +12,14 @@ trait CanDisplayLogo
     protected function displayLogo()
     {
         $logo = <<<EOT
-<fg=red;options=bold>           !</>
-<fg=red;options=bold>           ^</>
-<fg=cyan>          / \ </>
-<fg=cyan>         /===\</>
-<fg=cyan>        |  <fg=white;options=bold>L</>  |</>   <fg=cyan;options=bold>LaunchPoint</>
-<fg=cyan>        |  <fg=white;options=bold>P</>  |</>   <fg=white>───────────</>
-<fg=cyan>        |_____|</>   <fg=gray>Starter Kit</>
-<fg=red>         / V \ </>
-<fg=yellow>        V     V</>
-<fg=yellow;options=blink>       (  ( )  )</>
-<fg=gray>        ( ( ) )</>
+<fg=red;options=bold>    __    __  </>
+<fg=red;options=bold>   /  \  /  \ </>
+<fg=cyan>  /  LP  \   <fg=cyan;options=bold>LaunchPoint</>
+<fg=cyan> /  ______\  <fg=white>──────────────</>
+<fg=cyan>|  |        <fg=gray>Starter Kit</>
+<fg=cyan>|  |______</>
+<fg=cyan> \        /</>
+<fg=cyan>  \______/</>
 EOT;
         $this->line($logo);
         $this->newLine();
@@ -43,17 +40,14 @@ EOT;
         $reset  = "\033[0m";
 
         $logo = "
-{$red}{$bold}           !{$reset}
-{$red}{$bold}           ^{$reset}
-{$cyan}          / \ {$reset}
-{$cyan}         /===\{$reset}
-{$cyan}        |  {$white}{$bold}L{$reset}{$cyan}  |{$reset}   {$cyan}{$bold}LaunchPoint{$reset}
-{$cyan}        |  {$white}{$bold}P{$reset}{$cyan}  |{$reset}   {$white}───────────{$reset}
-{$cyan}        |_____|{$reset}   {$gray}Starter Kit{$reset}
-{$red}         / V \ {$reset}
-{$yellow}        V     V{$reset}
-{$yellow}       (  ( )  ){$reset}
-{$gray}        ( ( ) ){$reset}
+{$red}{$bold}    __    __  {$reset}
+{$red}{$bold}   /  \  /  \ {$reset}
+{$cyan}  /  LP  \   {$cyan}{$bold}LaunchPoint{$reset}
+{$cyan} /  ______\  {$white}──────────────{$reset}
+{$cyan}|  |        {$gray}Starter Kit{$reset}
+{$cyan}|  |______{$reset}
+{$cyan} \        /{$reset}
+{$cyan}  \______/{$reset}
 ";
         echo $logo . PHP_EOL;
     }
