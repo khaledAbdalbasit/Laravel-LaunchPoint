@@ -99,6 +99,28 @@ class LaunchPointServiceProvider extends ServiceProvider
                 '{{helper_namespace}}' => 'App\Helpers',
             ]);
         }
+        
+        $this->appendAuthRoutes();
+    }
+
+    /**
+     * Append Auth routes to the user's api.php file.
+     *
+     * @return void
+     */
+    protected function appendAuthRoutes()
+    {
+        $apiRoutesPath = base_path('routes/api.php');
+        $stubPath = __DIR__ . '/../stubs/api_routes.stub';
+
+        if (File::exists($apiRoutesPath) && File::exists($stubPath)) {
+            $routesContent = File::get($apiRoutesPath);
+            $stubContent = File::get($stubPath);
+
+            if (!str_contains($routesContent, 'LAUNCHPOINT AUTH ROUTES')) {
+                File::append($apiRoutesPath, "\n\n" . $stubContent);
+            }
+        }
     }
 
     /**
