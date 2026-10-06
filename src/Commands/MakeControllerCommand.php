@@ -4,7 +4,6 @@ namespace LaunchPoint\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
-
 use LaunchPoint\Traits\CanDisplayLogo;
 use Illuminate\Support\Str;
 
@@ -12,7 +11,12 @@ use Illuminate\Support\Str;
  * Class MakeControllerCommand
  *
  * Artisan command to generate a controller class.
- * Supports optional service injection and uses ApiResponseTrait for responses.
+ *
+ * Supports:
+ *  - Basic controller (no options)
+ *  - Service-injected controller (--service)
+ *  - Full stack scaffold with --all:
+ *      Repository → Service → Controller + Request + Resource
  */
 class MakeControllerCommand extends Command
 {
@@ -23,14 +27,21 @@ class MakeControllerCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'launchpoint:make-controller {name} {--service=} {--model=} {--all} {--a}';
+    protected $signature = 'launchpoint:make-controller
+                            {name}
+                            {--service=}
+                            {--model=}
+                            {--request=}
+                            {--resource=}
+                            {--all}
+                            {--a}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Create a controller (use --all or --a to auto-derive Service and Model names)';
+    protected $description = 'Create a controller — use --all to scaffold Repository, Service, Request & Resource together';
 
     /**
      * Execute the console command.
@@ -39,66 +50,78 @@ class MakeControllerCommand extends Command
      */
     public function handle()
     {
-        $name    = $this->argument('name');
-        $service = $this->option('service');
-        $model   = $this->option('model');
-        $all     = $this->option('all') || $this->option('a');
+        $name     = $this->argument('name');
+        $service  = $this->option('service');
+        $model    = $this->option('model');
+        $request  = $this->option('request');
+        $resource = $this->option('resource');
+        $all      = $this->option('all') || $this->option('a');
 
-        // Logic for --all flag shortcut
+        // Derive all names from the base when --all is used
         if ($all) {
-            // Get base name (e.g. ProductController -> Product, Product -> Product)
-            $baseForDeriving = basename(str_replace(['/', '\\'], '/', $name));
-            if (str_ends_with($baseForDeriving, 'Controller')) {
-                $baseForDeriving = substr($baseForDeriving, 0, -10);
+            $base = basename(str_replace(['/', '\\'], '/', $name));
+            if (str_ends_with($base, 'Controller')) {
+                $base = substr($base, 0, -10);
             }
 
-            // Derive defaults if not explicitly provided
-            $service = $service ?: "{$baseForDeriving}Service";
-            $model   = $model   ?: $baseForDeriving;
+            $service  = $service  ?: "{$base}Service";
+            $model    = $model    ?: $base;
+            $request  = $request  ?: "{$base}Request";
+            $resource = $resource ?: "{$base}Resource";
         }
 
-        // Ensure name ends with Controller for consistent filing
+        // Ensure Controller suffix
         if (!str_ends_with($name, 'Controller')) {
             $name .= 'Controller';
         }
 
-        // If a service is specified but does not exist, auto-generate it with its repository
-        if ($service) {
-            $servicePath = app_path("Services/{$service}.php");
-            if (!File::exists($servicePath)) {
-                $args = ['name' => $service];
-                if ($model) {
-                    $args['--model'] = $model;
-                }
-                $this->call('launchpoint:make-service', $args);
-                $this->info("Service [{$service}] and its Repository auto-generated.");
+        // Auto-generate Service (and its Repository) if needed
+        if ($service && !File::exists(app_path("Services/{$service}.php"))) {
+            $args = ['name' => $service];
+            if ($model) {
+                $args['--model'] = $model;
             }
+            $this->call('launchpoint:make-service', $args);
         }
 
+        // Auto-generate Request if needed
+        if ($request && !File::exists(app_path("Http/Requests/{$request}.php"))) {
+            $this->call('launchpoint:make-request', ['name' => $request]);
+        }
+
+        // Auto-generate Resource if needed
+        if ($resource && !File::exists(app_path("Http/Resources/{$resource}.php"))) {
+            $this->call('launchpoint:make-resource', ['name' => $resource]);
+        }
+
+        // Build the controller
         $path = app_path("Http/Controllers/{$name}.php");
 
         if (File::exists($path)) {
-            $this->error("Controller {$name} already exists.");
+            $this->error("Controller [{$name}] already exists.");
             return;
         }
 
-        if (!File::exists(app_path('Http/Controllers'))) {
-            File::makeDirectory(app_path('Http/Controllers'), 0755, true);
-        }
+        File::ensureDirectoryExists(app_path('Http/Controllers'));
 
-        $stub = $service ? $this->serviceStub($name, $service) : $this->basicStub($name);
+        $stub = match (true) {
+            (bool)$service && (bool)$request && (bool)$resource => $this->fullStub($name, $service, $request, $resource),
+            (bool)$service                                       => $this->serviceStub($name, $service),
+            default                                              => $this->basicStub($name),
+        };
+
         File::put($path, $stub);
 
-        $this->info("Controller {$name} created successfully.");
+        $this->info("Controller [{$name}] created successfully.");
     }
 
     /**
-     * Generate a basic controller stub without a service.
+     * Generate a basic controller stub without any dependency.
      *
      * @param string $class
      * @return string
      */
-    protected function basicStub($class)
+    protected function basicStub(string $class): string
     {
         return <<<PHP
 <?php
@@ -109,8 +132,6 @@ use App\Http\Controllers\Controller;
 
 /**
  * Class {$class}
- *
- * Basic controller without service injection.
  */
 class {$class} extends Controller
 {
@@ -120,13 +141,13 @@ PHP;
     }
 
     /**
-     * Generate a controller stub connected to a service.
+     * Generate a controller stub injecting only a Service.
      *
-     * @param string \$class
-     * @param string \$service
+     * @param string $class
+     * @param string $service
      * @return string
      */
-    protected function serviceStub($class, $service)
+    protected function serviceStub(string $class, string $service): string
     {
         return <<<PHP
 <?php
@@ -145,35 +166,19 @@ use Exception;
 /**
  * Class {$class}
  *
- * Controller connected to {$service} service.
- * Provides standard CRUD methods using ApiResponseTrait for consistent JSON responses.
+ * Controller connected to {$service}.
  */
 class {$class} extends Controller
 {
     use ApiResponseTrait;
 
-    /**
-     * The injected service instance.
-     *
-     * @var {$service}
-     */
     protected {$service} \$service;
 
-    /**
-     * {$class} constructor.
-     *
-     * @param {$service} \$service
-     */
     public function __construct({$service} \$service)
     {
         \$this->service = \$service;
     }
 
-    /**
-     * List all records.
-     *
-     * @return \\Illuminate\Http\JsonResponse
-     */
     public function index()
     {
         try {
@@ -186,12 +191,6 @@ class {$class} extends Controller
         }
     }
 
-    /**
-     * Show a single record by ID.
-     *
-     * @param int \$id
-     * @return \\Illuminate\Http\JsonResponse
-     */
     public function show(\$id)
     {
         try {
@@ -199,19 +198,11 @@ class {$class} extends Controller
             return \$this->apiResponse(['data' => \$data, 'message' => 'Record found.']);
         } catch (ModelNotFoundException \$e) {
             return \$this->apiResponse(['message' => 'Resource not found.', 'code' => 404]);
-        } catch (QueryException \$e) {
-            return \$this->apiResponse(['message' => 'Database error: ' . \$e->getMessage(), 'code' => 500]);
         } catch (Exception \$e) {
             return \$this->apiResponse(['message' => 'Unexpected error: ' . \$e->getMessage(), 'code' => 500]);
         }
     }
 
-    /**
-     * Store a new record.
-     *
-     * @param \\Illuminate\Http\Request \$request
-     * @return \\Illuminate\Http\JsonResponse
-     */
     public function store(Request \$request)
     {
         try {
@@ -226,13 +217,6 @@ class {$class} extends Controller
         }
     }
 
-    /**
-     * Update an existing record.
-     *
-     * @param \\Illuminate\Http\Request \$request
-     * @param int \$id
-     * @return \\Illuminate\Http\JsonResponse
-     */
     public function update(Request \$request, \$id)
     {
         try {
@@ -249,11 +233,147 @@ class {$class} extends Controller
         }
     }
 
+    public function destroy(\$id)
+    {
+        try {
+            \$this->service->delete(\$id);
+            return \$this->apiResponse(['message' => 'Record deleted successfully.']);
+        } catch (ModelNotFoundException \$e) {
+            return \$this->apiResponse(['message' => 'Resource not found.', 'code' => 404]);
+        } catch (QueryException \$e) {
+            return \$this->apiResponse(['message' => 'Database error: ' . \$e->getMessage(), 'code' => 500]);
+        } catch (Exception \$e) {
+            return \$this->apiResponse(['message' => 'Unexpected error: ' . \$e->getMessage(), 'code' => 500]);
+        }
+    }
+}
+PHP;
+    }
+
+    /**
+     * Generate a full controller stub with Service, FormRequest, and API Resource.
+     * Used when --all (or --request + --resource) flags are provided.
+     *
+     * Chain: Request → Controller → Service → Repository → Model
+     *                                       ↓
+     *                                   Resource (response)
+     *
+     * @param string $class
+     * @param string $service
+     * @param string $request
+     * @param string $resource
+     * @return string
+     */
+    protected function fullStub(string $class, string $service, string $request, string $resource): string
+    {
+        return <<<PHP
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Controllers\Controller;
+use App\Services\\{$service};
+use App\Http\Requests\\{$request};
+use App\Http\Resources\\{$resource};
+use App\Traits\ApiResponseTrait;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
+use Exception;
+
+/**
+ * Class {$class}
+ *
+ * Full-stack controller generated by LaunchPoint.
+ * Chain: {$request} → {$class} → {$service} → Repository → Model → {$resource}
+ */
+class {$class} extends Controller
+{
+    use ApiResponseTrait;
+
+    protected {$service} \$service;
+
+    public function __construct({$service} \$service)
+    {
+        \$this->service = \$service;
+    }
+
+    /**
+     * List all records wrapped in a Resource collection.
+     */
+    public function index()
+    {
+        try {
+            \$data = \$this->service->getAll();
+            return \$this->apiResponse([
+                'data'    => {$resource}::collection(\$data),
+                'message' => 'Records retrieved successfully.',
+            ]);
+        } catch (QueryException \$e) {
+            return \$this->apiResponse(['message' => 'Database error: ' . \$e->getMessage(), 'code' => 500]);
+        } catch (Exception \$e) {
+            return \$this->apiResponse(['message' => 'Unexpected error: ' . \$e->getMessage(), 'code' => 500]);
+        }
+    }
+
+    /**
+     * Show a single record wrapped in a Resource.
+     */
+    public function show(\$id)
+    {
+        try {
+            \$data = \$this->service->findOrFail(\$id);
+            return \$this->apiResponse([
+                'data'    => new {$resource}(\$data),
+                'message' => 'Record found.',
+            ]);
+        } catch (ModelNotFoundException \$e) {
+            return \$this->apiResponse(['message' => 'Resource not found.', 'code' => 404]);
+        } catch (Exception \$e) {
+            return \$this->apiResponse(['message' => 'Unexpected error: ' . \$e->getMessage(), 'code' => 500]);
+        }
+    }
+
+    /**
+     * Store a new record using validated Request data.
+     */
+    public function store({$request} \$request)
+    {
+        try {
+            \$data = \$this->service->create(\$request->validated());
+            return \$this->apiResponse([
+                'data'    => new {$resource}(\$data),
+                'message' => 'Record created successfully.',
+                'code'    => 201,
+            ]);
+        } catch (QueryException \$e) {
+            return \$this->apiResponse(['message' => 'Database error: ' . \$e->getMessage(), 'code' => 500]);
+        } catch (Exception \$e) {
+            return \$this->apiResponse(['message' => 'Unexpected error: ' . \$e->getMessage(), 'code' => 500]);
+        }
+    }
+
+    /**
+     * Update an existing record using validated Request data.
+     */
+    public function update({$request} \$request, \$id)
+    {
+        try {
+            \$data = \$this->service->update(\$id, \$request->validated());
+            return \$this->apiResponse([
+                'data'    => new {$resource}(\$data),
+                'message' => 'Record updated successfully.',
+            ]);
+        } catch (ModelNotFoundException \$e) {
+            return \$this->apiResponse(['message' => 'Resource not found.', 'code' => 404]);
+        } catch (QueryException \$e) {
+            return \$this->apiResponse(['message' => 'Database error: ' . \$e->getMessage(), 'code' => 500]);
+        } catch (Exception \$e) {
+            return \$this->apiResponse(['message' => 'Unexpected error: ' . \$e->getMessage(), 'code' => 500]);
+        }
+    }
+
     /**
      * Delete a record by ID.
-     *
-     * @param int \$id
-     * @return \\Illuminate\Http\JsonResponse
      */
     public function destroy(\$id)
     {

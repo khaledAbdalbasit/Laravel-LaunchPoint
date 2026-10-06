@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\File;
 use LaunchPoint\Commands\InstallLaunchPoint;
 use LaunchPoint\Commands\MakeControllerCommand;
 use LaunchPoint\Commands\MakeRepositoryCommand;
+use LaunchPoint\Commands\MakeRequestCommand;
+use LaunchPoint\Commands\MakeResourceCommand;
 use LaunchPoint\Commands\MakeServiceCommand;
 
 /**
@@ -40,7 +42,9 @@ class LaunchPointServiceProvider extends ServiceProvider
                 InstallLaunchPoint::class,
                 MakeServiceCommand::class,
                 MakeRepositoryCommand::class,
-                MakeControllerCommand::class
+                MakeControllerCommand::class,
+                MakeRequestCommand::class,
+                MakeResourceCommand::class,
             ]);
 
             $this->registerPublishables();
