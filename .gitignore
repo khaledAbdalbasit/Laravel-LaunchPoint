@@ -1,0 +1,43 @@
+﻿# ============================================
+# Laravel Package - .gitignore
+# ============================================
+
+# --- Composer Dependencies ---
+/vendor/
+composer.lock
+
+# --- Environment & Secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Laravel App (testing environment) ---
+/bootstrap/cache/
+/storage/*.key
+/storage/framework/cache/
+/storage/framework/sessions/
+/storage/framework/views/
+/storage/logs/
+/storage/app/public/
+
+# --- PHP Testing ---
+.phpunit.result.cache
+coverage/
+/.phpunit.cache/
+
+# --- IDE & Editor ---
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- OS Files ---
+desktop.ini
+
+# --- Local Packages (development only) ---
+/packages/
+
+# --- Compiled/Build ---
+*.log
