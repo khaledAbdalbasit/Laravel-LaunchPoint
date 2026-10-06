@@ -1,0 +1,76 @@
+<?php
+
+namespace {{namespace}};
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use {{trait_namespace}}\ApiResponseTrait;
+
+/**
+ * Class LoginRequest
+ * Handles validation for authentication with dynamic identifier support.
+ */
+class LoginRequest extends FormRequest
+{
+    use ApiResponseTrait;
+
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        // Automatically determine if the input is an email or a phone number
+        $field = filter_var($this->user_input, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
+
+        return [
+            'user_input' => "required|string|exists:users,$field",
+            'password'   => 'required|string',
+            'fcm_token'  => 'nullable|string',
+        ];
+    }
+
+    /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'user_input' => 'email or phone number',
+            'password'   => 'password',
+        ];
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     *
+     * @param  \Illuminate\Contracts\Validation\Validator  $validator
+     * @return void
+     *
+     * @throws \Illuminate\Http\Exceptions\HttpResponseException
+     */
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(
+            $this->apiResponse(
+                $validator->errors(),
+                $validator->errors()->first(),
+                422
+            )
+        );
+    }
+}
