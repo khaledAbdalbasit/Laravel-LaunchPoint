@@ -32,7 +32,7 @@ trait CanDisplayLogo
         $gray   = "\033[90m";
         $bold   = "\033[1m";
         $reset  = "\033[0m";
-
+ 
         echo "\n";
         echo "{$cyan}  ██╗      ██████╗ {$reset}\n";
         echo "{$cyan}  ██║     ██╔══██╗{$reset}\n";
