@@ -2,7 +2,7 @@
 # Laravel Package - .gitignore
 # ============================================
 
-# --- Composer Dependencies ---
+# --- Composer ---
 /vendor/
 composer.lock
 
@@ -11,19 +11,20 @@ composer.lock
 .env.*
 !.env.example
 
-# --- Laravel App (testing environment) ---
-/bootstrap/cache/
-/storage/*.key
-/storage/framework/cache/
-/storage/framework/sessions/
-/storage/framework/views/
-/storage/logs/
-/storage/app/public/
+# --- Laravel App Files (not part of the package) ---
+/app/
+/bootstrap/
+/database/
+/storage/
+/resources/
+/routes/
+/public/
+/packages/
 
-# --- PHP Testing ---
+# --- Testing ---
 .phpunit.result.cache
-coverage/
 /.phpunit.cache/
+coverage/
 
 # --- IDE & Editor ---
 .idea/
@@ -32,12 +33,7 @@ coverage/
 *.swo
 .DS_Store
 Thumbs.db
-
-# --- OS Files ---
 desktop.ini
 
-# --- Local Packages (development only) ---
-/packages/
-
-# --- Compiled/Build ---
+# --- Logs ---
 *.log
