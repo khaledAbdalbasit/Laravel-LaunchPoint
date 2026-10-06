@@ -1,315 +1,473 @@
-# 🚀 LaunchPoint API Starter Kit
+# LaunchPoint API Starter Kit
 
 <p align="center">
-<a href="https://laravel.com" target="_blank">
-<img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="300" alt="Laravel Logo">
-</a>
+  <a href="https://laravel.com" target="_blank">
+    <img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="300" alt="Laravel Logo">
+  </a>
 </p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/Laravel-11.x-red">
-<img src="https://img.shields.io/badge/PHP-8.1%2B-blue">
-<img src="https://img.shields.io/badge/License-MIT-green">
+  <img src="https://img.shields.io/badge/Laravel-11.x%20%7C%2012.x-red">
+  <img src="https://img.shields.io/badge/PHP-8.1%2B-blue">
+  <img src="https://img.shields.io/badge/License-MIT-green">
 </p>
 
 ---
 
-## 📌 Table of Contents
+## Table of Contents
 
-* [Introduction](#introduction)
-* [Features](#features)
-* [Installation](#installation)
-
-    * [Install via Composer](#install-via-composer)
-    * [Run LaunchPoint Installer](#run-launchpoint-installer)
-    * [Installation Wizard](#installation-wizard)
-
-        * [Step 1 — Ensure API Setup](#step-1-ensure-api-setup)
-        * [Step 2 — Authentication System](#step-2-authentication-system)
-        * [Step 3 — Optional Components](#step-3-optional-components)
-        * [Step 4 — Publish Configuration](#step-4-publish-configuration)
-* [LaunchPoint Artisan Commands](#launchpoint-artisan-commands)
-* [Example Installation](#example-installation)
-* [Generated Project Structure](#generated-project-structure)
-* [Example API Response](#example-api-response)
-* [Requirements](#requirements)
-* [Roadmap](#roadmap)
-* [Contributing](#contributing)
-* [License](#license)
-* [Author](#author)
+- [Introduction](#introduction)
+- [Architecture Overview](#architecture-overview)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Interactive Wizard](#interactive-wizard)
+- [Artisan Commands Reference](#artisan-commands-reference)
+  - [Setup & System Commands](#setup--system-commands)
+  - [Architectural Scaffolding Commands](#architectural-scaffolding-commands)
+  - [Data & Validation Generators](#data--validation-generators)
+  - [Domain & Logic Generators](#domain--logic-generators)
+- [Core Utilities](#core-utilities)
+  - [ApiResponseTrait](#apiresponsetrait)
+  - [FileHelper](#filehelper)
+- [Auth Scaffolding System](#auth-scaffolding-system)
+- [Generated Folder Structure](#generated-folder-structure)
+- [Configuration](#configuration)
+- [Contributing](#contributing)
+- [License](#license)
+- [Author](#author)
 
 ---
 
 ## Introduction
 
-**LaunchPoint** is a powerful API starter kit for Laravel designed to accelerate backend development.
+**LaunchPoint** is a complete API starter kit and code generator suite for Laravel applications. It accelerates backend development by adhering to a strict **Clean Architecture** design pattern (`Controller -> Service -> Repository -> Model`).
 
-It provides an interactive scaffolding system that installs essential backend architecture components including:
+LaunchPoint provides 15 dedicated Artisan generators that auto-wire architectural layers, generate full CRUD boilerplate, and scaffold essential API components in seconds.
 
-* Authentication System
-* Service Layer
-* Repository Layer
-* File Helpers
-* API Response Traits
+---
 
-LaunchPoint helps developers **start building production-ready APIs within seconds instead of hours.**
+## Architecture Overview
+
+LaunchPoint enforces a layered design pattern for clear separation of concerns:
+
+```
+[ HTTP Request ]
+       │
+       ▼
+┌──────────────┐
+│  Controller  │  Handles HTTP requests, validation, and formats JSON responses.
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│   Service    │  Contains core business rules and orchestrates data processing.
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│  Repository  │  Encapsulates Eloquent database queries and handles data persistence.
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│    Model     │  Eloquent ORM representation of database entities.
+└──────────────┘
+```
 
 ---
 
 ## Features
 
-* **🔥 Magic Scaffolding (`--all`)**: Generate Controller, Service, and Repository layers in one command.
-* **⚡ Full CRUD Boilerplate**: Generated classes come with fully working CRUD code (index, show, store, update, destroy).
-* **🏗️ Clean Architecture**: Enforces a strict `Controller -> Service -> Repository -> Model` chain.
-* Interactive installation wizard
-* Automatic Laravel API setup
-* Authentication system with OTP support (`fisal/laravel-otp`)
-* File handling utilities & Standardized API responses
-* Laravel 11+ ready
+- **Full Architectural Generators**: Generate Controllers, Services, Repositories, Models, Requests, Resources, Enums, Actions, and more.
+- **Magic Scaffolding (`--all`)**: Auto-generate Controller, Service, and Repository layers simultaneously with full CRUD operations wired up.
+- **Working CRUD Boilerplate**: Scaffolds complete implementations (`index`, `show`, `store`, `update`, `destroy`) with exception handling.
+- **System Health Diagnostics**: Built-in health check command (`launchpoint:health`) to verify environment, database, and folder setup.
+- **Interactive Wizard**: Interactive installer command allowing selective installation of Auth scaffolding, File helpers, and Response traits.
+- **Standardized API Responses**: Built-in `ApiResponseTrait` supporting data payload, pagination meta, custom status codes, and error formatting.
+- **File Helper Utility**: Static `FileHelper` for file upload, replacement, and deletion.
+- **Authentication Scaffolding**: Production-ready Auth suite with Controllers, Services, Repositories, Form Requests, and OTP integration.
+
+---
+
+## Requirements
+
+- **PHP**: ^8.1 or ^8.2 or ^8.3
+- **Laravel Framework**: ^11.0 or ^12.0
 
 ---
 
 ## Installation
 
-### Install via Composer
+### 1. Install via Composer
 
 ```bash
 composer require khaledabdalbasit/launchpoint
 ```
 
-### Run LaunchPoint Installer
+### 2. Run the Interactive Installer
 
 ```bash
 php artisan launchpoint:install
 ```
 
-Launches the interactive installation wizard.  Choose whether to install Authentication, FileHelper, ApiResponseTrait, etc.
-
-### Installation Wizard
-
-#### Step 1 — Ensure API Setup
-
-Checks if `routes/api.php` exists. If not, runs automatically:
-
-```bash
-php artisan install:api
-```
-
-#### Step 2 — Authentication System
-
-Installs:
-
-* `AuthController`
-* `LoginRequest`
-* `RegisterRequest`
-* `AuthService`
-* `UserResource`
-* OTP integration
-* `FileHelper`
-* `ApiResponseTrait`
-
-#### Step 3 — Optional Components
-
-* **FileHelper**
-
-```bash
-php artisan launchpoint:install-filehelper
-```
-
-* **ApiResponseTrait**
-
-```bash
-php artisan launchpoint:install-apiresponse
-```
-
-#### Step 4 — Publish Configuration
+### 3. Publish Configuration (Optional)
 
 ```bash
 php artisan vendor:publish --tag=launchpoint-config
 ```
 
-Publishes `config/launchpoint.php`.
+---
+
+## Interactive Wizard
+
+When executing `php artisan launchpoint:install`, the wizard performs the following:
+
+1. **API Route Verification**: Checks if `routes/api.php` exists. If missing, automatically executes `php artisan install:api`.
+2. **Authentication Scaffolding**: Prompts whether to install full Auth scaffolding (Controllers, Services, Repositories, Requests, and OTP validation).
+3. **Selective Components**: If full Auth is skipped, allows individual installation of `FileHelper` or `ApiResponseTrait`.
+4. **Configuration Publishing**: Automatically publishes `config/launchpoint.php`.
 
 ---
 
-## LaunchPoint Artisan Commands
+## Artisan Commands Reference
 
-LaunchPoint comes with powerful scaffolding generators that automatically write full CRUD boilerplate and link your architecture layers together. Below is a detailed breakdown of each command and its available flags.
-
----
-
-### 1️⃣ Make Controller
-
-Generates a new API Controller. Can be standalone or automatically wired to a Service.
+LaunchPoint includes 15 commands designed to cover every layer of backend application development.
 
 ```bash
-php artisan launchpoint:make-controller {name} [options]
-```
-
-**Available Options:**
-* **`--service=ServiceName`**: Injects a specific Service class into the Controller's constructor. If the Service doesn't exist, it will auto-generate it.
-* **`--model=ModelName`**: Specifies the associated Model (best used alongside `--all`).
-* **`--all` or `-a` (🔥 Magic Flag)**: The ultimate time-saver! It takes the base name of your Controller, derives the Service and Model names, and generates all of them simultaneously with full CRUD operations wired up.
-
-**Examples:**
-```bash
-# Basic Controller
-php artisan launchpoint:make-controller UserController
-
-# Controller with a specific service
-php artisan launchpoint:make-controller UserController --service=UserAuthService
-
-# Magic Generation (Creates UserController, UserService, and UserRepository with CRUD)
-php artisan launchpoint:make-controller UserController --all
+# View all available LaunchPoint commands and options
+php artisan launchpoint:list
 ```
 
 ---
 
-### 2️⃣ Make Service
+### Setup & System Commands
 
-Generates a Service class to house your business logic.
+#### 1. launchpoint:install
 
-```bash
-php artisan launchpoint:make-service {name} [options]
-```
-
-**Available Options:**
-* **`--model=ModelName`**: When you provide this flag, LaunchPoint will not only generate the Service, but it will also **automatically generate the matching Repository** for the model. The generated Service will be pre-configured to inject the Repository and delegate all CRUD operations to it.
-
-**Examples:**
-```bash
-# Basic empty Service
-php artisan launchpoint:make-service PaymentService
-
-# Generates ProductService AND ProductRepository, linked together
-php artisan launchpoint:make-service ProductService --model=Product
-```
-
----
-
-### 3️⃣ Make Repository
-
-Generates a Repository class to handle all database operations.
-
-```bash
-php artisan launchpoint:make-repository {name} [options]
-```
-
-**Available Options:**
-* **`--model=ModelName`**: When provided, the Repository won't be empty. It will be generated with **fully implemented CRUD methods** (`all()`, `findOrFail()`, `create()`, `update()`, `delete()`) tailored exactly for the specified Model.
-
-**Examples:**
-```bash
-# Basic empty Repository
-php artisan launchpoint:make-repository ReportRepository
-
-# Generates OrderRepository with full CRUD methods for the Order model
-php artisan launchpoint:make-repository OrderRepository --model=Order
-```
-
----
-
-## Example Installation
+Launches the interactive installation wizard to setup package components.
 
 ```bash
 php artisan launchpoint:install
 ```
 
-LaunchPoint Installation Wizard:
+#### 2. launchpoint:list
 
+Displays a formatted table of all available LaunchPoint commands, signatures, and options.
+
+```bash
+php artisan launchpoint:list
 ```
-Do you want to install the Authentication Scaffolding? (yes/no) [yes]:
-✔ Auth system installed
-Installation completed successfully.
-```
 
----
+#### 3. launchpoint:health
 
-## Generated Project Structure
+Performs project health diagnostics, testing database connectivity, `.env` key configurations, and required storage/app directory paths.
 
-```
-app
- ├── Helpers
- │   └── FileHelper.php
- │
- ├── Traits
- │   └── ApiResponseTrait.php
- │
- ├── Services
- │   └── Auth
- │        └── AuthService.php
- │
- └── Http
-     ├── Controllers
-     │    └── Auth
-     │         └── AuthController.php
-     │
-     └── Requests
-          └── Auth
-               ├── LoginRequest.php
-               └── RegisterRequest.php
-Repositories/
- └── ExampleRepository.php
+```bash
+php artisan launchpoint:health
 ```
 
 ---
 
-## Example API Response
+### Architectural Scaffolding Commands
 
-Using `ApiResponseTrait`:
+#### 4. launchpoint:make-controller
 
-```php
-return $this->apiResponse($data, 'User logged in successfully');
+Generates an API Controller class in `app/Http/Controllers/`.
+
+```bash
+php artisan launchpoint:make-controller {name} [options]
 ```
 
-Response:
+- `--service=ServiceName`: Injects a specific Service class. Auto-generates the Service if missing.
+- `--model=ModelName`: Specifies the associated Eloquent Model.
+- `--all` or `-a`: Derives Service and Model names from the Controller name, generating Controller, Service, and Repository layers with working CRUD methods.
+
+```bash
+# Generate complete architectural stack in one command
+php artisan launchpoint:make-controller ProductController --all
+```
+
+#### 5. launchpoint:make-service
+
+Generates a Service class in `app/Services/`.
+
+```bash
+php artisan launchpoint:make-service {name} [options]
+```
+
+- `--model=ModelName`: Auto-generates the matching Repository (e.g. `ProductRepository`), injects it into the Service constructor, and delegates CRUD methods (`all`, `findOrFail`, `create`, `update`, `delete`).
+
+```bash
+php artisan launchpoint:make-service ProductService --model=Product
+```
+
+#### 6. launchpoint:make-repository
+
+Generates a Repository class in `app/Repositories/`.
+
+```bash
+php artisan launchpoint:make-repository {name} [options]
+```
+
+- `--model=ModelName`: Equips the Repository with complete CRUD operations and database exception handling (`QueryException`, `ModelNotFoundException`).
+
+```bash
+php artisan launchpoint:make-repository ProductRepository --model=Product
+```
+
+#### 7. launchpoint:make-model
+
+Generates an Eloquent Model in `app/Models/` with a pre-configured `$fillable` array.
+
+```bash
+php artisan launchpoint:make-model {name} [options]
+```
+
+- `--fillable=col1,col2`: Specifies fillable attributes.
+- `--migration` or `-m`: Creates matching database migration file.
+- `--factory` or `-f`: Creates model factory.
+- `--seeder` or `-s`: Creates database seeder.
+- `--all` or `-a`: Creates model, migration, factory, and seeder together.
+
+```bash
+php artisan launchpoint:make-model Product --fillable=title,price,stock --all
+```
+
+---
+
+### Data & Validation Generators
+
+#### 8. launchpoint:make-request
+
+Generates a FormRequest class in `app/Http/Requests/` with structured `authorize()`, `rules()`, and `messages()` methods.
+
+```bash
+php artisan launchpoint:make-request {name} [options]
+```
+
+- `--model=ModelName`: Automatically generates suggested validation rules based on model name context.
+
+```bash
+php artisan launchpoint:make-request StoreProductRequest --model=Product
+```
+
+#### 9. launchpoint:make-resource
+
+Generates an API Resource in `app/Http/Resources/`.
+
+```bash
+php artisan launchpoint:make-resource {name} [options]
+```
+
+- `--collection` or `-c`: Creates a matching `ResourceCollection` class alongside the Resource.
+
+```bash
+php artisan launchpoint:make-resource ProductResource --collection
+```
+
+#### 10. launchpoint:make-enum
+
+Generates a PHP 8.1+ Backed Enum in `app/Enums/` with `label()` and option array helpers.
+
+```bash
+php artisan launchpoint:make-enum {name} [options]
+```
+
+- `--cases=case1,case2`: Defines enum cases directly from the command line.
+
+```bash
+php artisan launchpoint:make-enum OrderStatus --cases=pending,processing,completed,cancelled
+```
+
+---
+
+### Domain & Logic Generators
+
+#### 11. launchpoint:make-action
+
+Generates a Single Action class in `app/Actions/` containing a `handle()` method.
+
+```bash
+php artisan launchpoint:make-action CreateOrderAction
+```
+
+#### 12. launchpoint:make-trait
+
+Generates a custom Trait in `app/Traits/`.
+
+```bash
+php artisan launchpoint:make-trait HasUuid
+```
+
+#### 13. launchpoint:make-exception
+
+Generates a custom Exception class in `app/Exceptions/` containing a `render()` method that returns a formatted JSON API response.
+
+```bash
+php artisan launchpoint:make-exception PaymentFailedException
+```
+
+#### 14. launchpoint:make-filter
+
+Generates an Eloquent Query Filter class in `app/Filters/` for clean request filtering.
+
+```bash
+php artisan launchpoint:make-filter ProductFilter
+```
+
+#### 15. launchpoint:make-scope
+
+Generates an Eloquent Local Scope class in `app/Scopes/`.
+
+```bash
+php artisan launchpoint:make-scope ActiveScope
+```
+
+---
+
+## Core Utilities
+
+### ApiResponseTrait
+
+Standardizes JSON response structures across all API endpoints.
+
+#### Scaffolded Path:
+`app/Traits/ApiResponseTrait.php`
+
+#### Available Methods:
+
+- `apiResponse($data, $message, $status, $errors)`
+- `successResponse($data, $message, $status)`
+- `errorResponse($message, $status, $errors)`
+
+#### Example Response Output:
 
 ```json
 {
-    "status": true,
-    "message": "User logged in successfully",
+    "status": 200,
+    "message": "Data retrieved successfully.",
     "data": {
-        "user": {}
+        "id": 1,
+        "name": "Sample Product"
     }
 }
 ```
 
 ---
 
-## Requirements
+### FileHelper
 
-* PHP 8.1+
-* Laravel 11+
+Provides static methods for handling file uploads, updates, and removals in public storage.
+
+#### Scaffolded Path:
+`app/Helpers/FileHelper.php`
+
+#### Usage Examples:
+
+```php
+use App\Helpers\FileHelper;
+
+// Upload file to storage
+$path = FileHelper::upload($request->file('image'), 'products');
+
+// Replace existing file
+$newPath = FileHelper::update($request->file('image'), $oldPath, 'products');
+
+// Delete file
+FileHelper::delete($filePath);
+```
 
 ---
 
-## Roadmap
+## Auth Scaffolding System
 
-* Repository scaffolding generator
-* Service generator
-* API resource generator
-* Role & Permission scaffolding
-* API versioning support
-* Swagger documentation generator
+When installing the Auth suite via `launchpoint:install`, LaunchPoint generates the following production-ready components:
+
+- **Controller**: `app/Http/Controllers/Api/Auth/AuthController.php`
+- **Service**: `app/Services/Api/Auth/AuthService.php`
+- **Repository**: `app/Repositories/Api/Auth/AuthRepository.php`
+- **Requests**: 
+  - `app/Http/Requests/Auth/LoginRequest.php`
+  - `app/Http/Requests/Auth/RegisterRequest.php`
+- **Supported Operations**: User registration, login, Sanctum token generation, OTP generation & verification, OTP resend, and logout.
+
+---
+
+## Generated Folder Structure
+
+```
+app/
+├── Actions/
+│   └── CreateOrderAction.php
+├── Enums/
+│   └── OrderStatus.php
+├── Exceptions/
+│   └── PaymentFailedException.php
+├── Filters/
+│   └── ProductFilter.php
+├── Helpers/
+│   └── FileHelper.php
+├── Http/
+│   ├── Controllers/
+│   │   ├── Api/Auth/AuthController.php
+│   │   └── ProductController.php
+│   ├── Requests/
+│   │   └── Auth/
+│   │       ├── LoginRequest.php
+│   │       └── RegisterRequest.php
+│   └── Resources/
+│       ├── ProductResource.php
+│       └── ProductCollection.php
+├── Models/
+│   └── Product.php
+├── Repositories/
+│   ├── Api/Auth/AuthRepository.php
+│   └── ProductRepository.php
+├── Scopes/
+│   └── ActiveScope.php
+├── Services/
+│   ├── Api/Auth/AuthService.php
+│   └── ProductService.php
+└── Traits/
+    ├── ApiResponseTrait.php
+    └── HasUuid.php
+```
+
+---
+
+## Configuration
+
+Published to `config/launchpoint.php`:
+
+```php
+return [
+    'api_prefix' => 'api',
+    'default_response_code' => 200,
+];
+```
 
 ---
 
 ## Contributing
 
-* Fork the repository
-* Create a feature branch
-* Commit your changes
-* Open a Pull Request
+Contributions and pull requests are welcome!
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ---
 
 ## License
 
-MIT License © Khaled Abdelbasit
+Open-sourced software licensed under the [MIT license](LICENSE).
 
 ---
 
 ## Author
 
-Khaled Abdelbasit
+**Khaled Abdelbasit**
 Backend Engineer specializing in Laravel architecture and API systems.

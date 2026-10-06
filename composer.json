@@ -9,7 +9,13 @@
     },
     "autoload": {
         "psr-4": {
-            "LaunchPoint\\": "src/"
+            "LaunchPoint\\": "src/",
+            "App\\": "app/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
         }
     },
     "scripts": {

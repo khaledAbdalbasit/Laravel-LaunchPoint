@@ -4,10 +4,21 @@ namespace LaunchPoint\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\File;
+use LaunchPoint\Commands\HealthCommand;
 use LaunchPoint\Commands\InstallLaunchPoint;
+use LaunchPoint\Commands\ListCommand;
+use LaunchPoint\Commands\MakeActionCommand;
 use LaunchPoint\Commands\MakeControllerCommand;
+use LaunchPoint\Commands\MakeEnumCommand;
+use LaunchPoint\Commands\MakeExceptionCommand;
+use LaunchPoint\Commands\MakeFilterCommand;
+use LaunchPoint\Commands\MakeModelCommand;
 use LaunchPoint\Commands\MakeRepositoryCommand;
+use LaunchPoint\Commands\MakeRequestCommand;
+use LaunchPoint\Commands\MakeResourceCommand;
+use LaunchPoint\Commands\MakeScopeCommand;
 use LaunchPoint\Commands\MakeServiceCommand;
+use LaunchPoint\Commands\MakeTraitCommand;
 
 /**
  * Class LaunchPointServiceProvider
@@ -40,7 +51,18 @@ class LaunchPointServiceProvider extends ServiceProvider
                 InstallLaunchPoint::class,
                 MakeServiceCommand::class,
                 MakeRepositoryCommand::class,
-                MakeControllerCommand::class
+                MakeControllerCommand::class,
+                MakeModelCommand::class,
+                MakeRequestCommand::class,
+                MakeResourceCommand::class,
+                MakeEnumCommand::class,
+                MakeActionCommand::class,
+                MakeTraitCommand::class,
+                MakeExceptionCommand::class,
+                MakeFilterCommand::class,
+                MakeScopeCommand::class,
+                ListCommand::class,
+                HealthCommand::class,
             ]);
 
             $this->registerPublishables();
