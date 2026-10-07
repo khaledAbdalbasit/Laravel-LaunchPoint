@@ -1,0 +1,65 @@
+﻿<?php
+
+namespace {{namespace}};
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use {{trait_namespace}}\ApiResponseTrait;
+
+/**
+ * Class ResendOtpRequest
+ * Handles validation for OTP resend requests.
+ */
+class ResendOtpRequest extends FormRequest
+{
+    use ApiResponseTrait;
+
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'user_input' => 'required|string',
+        ];
+    }
+
+    /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'user_input' => 'email or phone number',
+        ];
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     *
+     * @throws \Illuminate\Http\Exceptions\HttpResponseException
+     */
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(
+            $this->apiResponse(
+                $validator->errors(),
+                $validator->errors()->first(),
+                422
+            )
+        );
+    }
+}

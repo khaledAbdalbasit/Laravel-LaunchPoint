@@ -1,0 +1,33 @@
+﻿<?php
+
+namespace {{namespace}};
+
+use Illuminate\Http\Resources\Json\JsonResource;
+
+/**
+ * Class UserResource
+ * Transforms the User model into a consistent JSON structure.
+ */
+class UserResource extends JsonResource
+{
+    /**
+     * Transform the resource into an array.
+     *
+     * @param  \Illuminate\Http\Request  \
+     * @return array<string, mixed>
+     */
+    public function toArray(\): array
+    {
+        return [
+            'id'                => \->id,
+            'name'              => \->name,
+            'email'             => \->email,
+            'phone'             => \->phone,
+            'image'             => \->image ? asset(\->image) : null,
+            'role'              => \->role,
+            'status'            => \->status,
+            'email_verified_at' => \->email_verified_at?->toDateTimeString(),
+            'created_at'        => \->created_at?->toDateTimeString(),
+        ];
+    }
+}
