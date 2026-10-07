@@ -1,4 +1,4 @@
-# 🚀 LaunchPoint API Starter Kit
+﻿# 🚀 LaunchPoint API Starter Kit
 
 <p align="center">
 <a href="https://laravel.com" target="_blank">
@@ -19,17 +19,16 @@
 * [Introduction](#introduction)
 * [Features](#features)
 * [Installation](#installation)
-
     * [Install via Composer](#install-via-composer)
     * [Run LaunchPoint Installer](#run-launchpoint-installer)
     * [Installation Wizard](#installation-wizard)
-
-        * [Step 1 — Ensure API Setup](#step-1-ensure-api-setup)
-        * [Step 2 — Authentication System](#step-2-authentication-system)
-        * [Step 3 — Optional Components](#step-3-optional-components)
-        * [Step 4 — Publish Configuration](#step-4-publish-configuration)
 * [LaunchPoint Artisan Commands](#launchpoint-artisan-commands)
-* [Example Installation](#example-installation)
+    * [Make Controller](#1️⃣-make-controller)
+    * [Make Service](#2️⃣-make-service)
+    * [Make Repository](#3️⃣-make-repository)
+    * [Make Request](#4️⃣-make-request)
+    * [Make Resource](#5️⃣-make-resource)
+* [Magic --all Flag](#-magic---all-flag)
 * [Generated Project Structure](#generated-project-structure)
 * [Example API Response](#example-api-response)
 * [Requirements](#requirements)
@@ -46,11 +45,11 @@
 
 It provides an interactive scaffolding system that installs essential backend architecture components including:
 
-* Authentication System
-* Service Layer
-* Repository Layer
-* File Helpers
-* API Response Traits
+* Authentication System (with OTP support)
+* Service & Repository Layers
+* FormRequest Validation
+* API Resources (JSON transformation)
+* File Helpers & API Response Traits
 
 LaunchPoint helps developers **start building production-ready APIs within seconds instead of hours.**
 
@@ -58,9 +57,11 @@ LaunchPoint helps developers **start building production-ready APIs within secon
 
 ## Features
 
-* **🔥 Magic Scaffolding (`--all`)**: Generate Controller, Service, and Repository layers in one command.
-* **⚡ Full CRUD Boilerplate**: Generated classes come with fully working CRUD code (index, show, store, update, destroy).
-* **🏗️ Clean Architecture**: Enforces a strict `Controller -> Service -> Repository -> Model` chain.
+* **🔥 Magic Scaffolding (`--all`)**: One command generates Controller, Service, Repository, FormRequest, and API Resource — all wired together with full CRUD.
+* **⚡ Full CRUD Boilerplate**: Every generated class ships with working `index`, `show`, `store`, `update`, and `destroy` methods.
+* **🏗️ Clean Architecture**: Enforces a strict `Request → Controller → Service → Repository → Model → Resource` chain.
+* **✅ FormRequest Validation**: Auto-generates typed `FormRequest` classes with `$request->validated()` wiring.
+* **📦 API Resources**: Auto-generates `JsonResource` classes for clean response transformation.
 * Interactive installation wizard
 * Automatic Laravel API setup
 * Authentication system with OTP support (`fisal/laravel-otp`)
@@ -83,7 +84,7 @@ composer require khaledabdalbasit/launchpoint
 php artisan launchpoint:install
 ```
 
-Launches the interactive installation wizard.  Choose whether to install Authentication, FileHelper, ApiResponseTrait, etc.
+Launches the interactive installation wizard. Choose whether to install Authentication, FileHelper, ApiResponseTrait, etc.
 
 ### Installation Wizard
 
@@ -100,27 +101,16 @@ php artisan install:api
 Installs:
 
 * `AuthController`
-* `LoginRequest`
-* `RegisterRequest`
-* `AuthService`
-* `UserResource`
-* OTP integration
+* `LoginRequest` & `RegisterRequest`
+* `AuthService` & `AuthRepository`
+* OTP integration via `fisal/laravel-otp`
 * `FileHelper`
 * `ApiResponseTrait`
 
 #### Step 3 — Optional Components
 
-* **FileHelper**
-
-```bash
-php artisan launchpoint:install-filehelper
-```
-
-* **ApiResponseTrait**
-
-```bash
-php artisan launchpoint:install-apiresponse
-```
+* **FileHelper only**
+* **ApiResponseTrait only**
 
 #### Step 4 — Publish Configuration
 
@@ -134,33 +124,39 @@ Publishes `config/launchpoint.php`.
 
 ## LaunchPoint Artisan Commands
 
-LaunchPoint comes with powerful scaffolding generators that automatically write full CRUD boilerplate and link your architecture layers together. Below is a detailed breakdown of each command and its available flags.
+LaunchPoint ships with powerful scaffolding generators that automatically write full CRUD boilerplate and link your architecture layers together.
 
 ---
 
 ### 1️⃣ Make Controller
 
-Generates a new API Controller. Can be standalone or automatically wired to a Service.
+Generates a new API Controller. Can be standalone, service-injected, or fully scaffolded.
 
 ```bash
 php artisan launchpoint:make-controller {name} [options]
 ```
 
 **Available Options:**
-* **`--service=ServiceName`**: Injects a specific Service class into the Controller's constructor. If the Service doesn't exist, it will auto-generate it.
-* **`--model=ModelName`**: Specifies the associated Model (best used alongside `--all`).
-* **`--all` or `-a` (🔥 Magic Flag)**: The ultimate time-saver! It takes the base name of your Controller, derives the Service and Model names, and generates all of them simultaneously with full CRUD operations wired up.
+
+| Option | Description |
+|---|---|
+| `--service=ServiceName` | Inject a specific Service into the Controller constructor. Auto-generates the Service if it doesn't exist. |
+| `--model=ModelName` | Associate a Model (used alongside `--service` or `--all`). |
+| `--request=RequestName` | Inject a specific FormRequest for `store` & `update`. Auto-generates it if it doesn't exist. |
+| `--resource=ResourceName` | Wrap responses in a specific API Resource. Auto-generates it if it doesn't exist. |
+| `--all` / `--a` 🔥 | Derives all names from the base and generates the full stack automatically. |
 
 **Examples:**
+
 ```bash
 # Basic Controller
-php artisan launchpoint:make-controller UserController
+php artisan launchpoint:make-controller ProductController
 
 # Controller with a specific service
-php artisan launchpoint:make-controller UserController --service=UserAuthService
+php artisan launchpoint:make-controller ProductController --service=ProductService
 
-# Magic Generation (Creates UserController, UserService, and UserRepository with CRUD)
-php artisan launchpoint:make-controller UserController --all
+# Full magic: generates Controller + Service + Repository + Request + Resource
+php artisan launchpoint:make-controller Product --all
 ```
 
 ---
@@ -174,9 +170,13 @@ php artisan launchpoint:make-service {name} [options]
 ```
 
 **Available Options:**
-* **`--model=ModelName`**: When you provide this flag, LaunchPoint will not only generate the Service, but it will also **automatically generate the matching Repository** for the model. The generated Service will be pre-configured to inject the Repository and delegate all CRUD operations to it.
+
+| Option | Description |
+|---|---|
+| `--model=ModelName` | Generates the Service pre-wired to an auto-created Repository with full CRUD methods. |
 
 **Examples:**
+
 ```bash
 # Basic empty Service
 php artisan launchpoint:make-service PaymentService
@@ -196,60 +196,182 @@ php artisan launchpoint:make-repository {name} [options]
 ```
 
 **Available Options:**
-* **`--model=ModelName`**: When provided, the Repository won't be empty. It will be generated with **fully implemented CRUD methods** (`all()`, `findOrFail()`, `create()`, `update()`, `delete()`) tailored exactly for the specified Model.
+
+| Option | Description |
+|---|---|
+| `--model=ModelName` | Generates the Repository with fully implemented CRUD methods (`all`, `findOrFail`, `create`, `update`, `delete`) for the given Model. |
 
 **Examples:**
+
 ```bash
 # Basic empty Repository
 php artisan launchpoint:make-repository ReportRepository
 
-# Generates OrderRepository with full CRUD methods for the Order model
+# Full CRUD Repository for the Order model
 php artisan launchpoint:make-repository OrderRepository --model=Order
 ```
 
 ---
 
-## Example Installation
+### 4️⃣ Make Request
+
+Generates a `FormRequest` class with `authorize()` and `rules()` methods ready to fill.
 
 ```bash
-php artisan launchpoint:install
+php artisan launchpoint:make-request {name}
 ```
 
-LaunchPoint Installation Wizard:
+> Automatically appends `Request` suffix if not provided.
+
+**Examples:**
+
+```bash
+php artisan launchpoint:make-request StoreProductRequest
+# → app/Http/Requests/StoreProductRequest.php
+
+php artisan launchpoint:make-request Product
+# → app/Http/Requests/ProductRequest.php
+```
+
+**Generated output:**
+
+```php
+class ProductRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            //
+        ];
+    }
+}
+```
+
+---
+
+### 5️⃣ Make Resource
+
+Generates a `JsonResource` class for clean API response transformation.
+
+```bash
+php artisan launchpoint:make-resource {name}
+```
+
+> Automatically appends `Resource` suffix if not provided.
+
+**Examples:**
+
+```bash
+php artisan launchpoint:make-resource ProductResource
+# → app/Http/Resources/ProductResource.php
+
+php artisan launchpoint:make-resource Product
+# → app/Http/Resources/ProductResource.php
+```
+
+**Generated output:**
+
+```php
+class ProductResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return parent::toArray($request);
+    }
+}
+```
+
+---
+
+## 🔥 Magic `--all` Flag
+
+The most powerful feature of LaunchPoint. One single command scaffolds your **entire feature stack**:
+
+```bash
+php artisan launchpoint:make-controller Product --all
+```
+
+**What gets generated:**
 
 ```
-Do you want to install the Authentication Scaffolding? (yes/no) [yes]:
-✔ Auth system installed
-Installation completed successfully.
+app/
+├── Http/
+│   ├── Controllers/ProductController.php   ← Full CRUD, uses Request + Resource
+│   ├── Requests/ProductRequest.php         ← $request->validated() in store/update
+│   └── Resources/ProductResource.php       ← Wraps all responses
+├── Services/
+│   └── ProductService.php                  ← Delegates to Repository
+└── Repositories/
+    └── ProductRepository.php               ← Full CRUD for Product model
+```
+
+**The generated chain:**
+
+```
+ProductRequest → ProductController → ProductService → ProductRepository → Product model
+                                                                        ↓
+                                                              ProductResource (response)
+```
+
+**Controller response examples:**
+
+```php
+// index  → ResourceCollection
+return $this->apiResponse(['data' => ProductResource::collection($data)]);
+
+// show   → single Resource
+return $this->apiResponse(['data' => new ProductResource($data)]);
+
+// store  → validated() + Resource
+public function store(ProductRequest $request) { ... }
+
+// update → validated() + Resource
+public function update(ProductRequest $request, $id) { ... }
 ```
 
 ---
 
 ## Generated Project Structure
 
+After running `launchpoint:install` + `launchpoint:make-controller Product --all`:
+
 ```
-app
- ├── Helpers
- │   └── FileHelper.php
- │
- ├── Traits
- │   └── ApiResponseTrait.php
- │
- ├── Services
- │   └── Auth
- │        └── AuthService.php
- │
- └── Http
-     ├── Controllers
-     │    └── Auth
-     │         └── AuthController.php
-     │
-     └── Requests
-          └── Auth
-               ├── LoginRequest.php
-               └── RegisterRequest.php
-Repositories/
- └── ExampleRepository.php
+app/
+├── Helpers/
+│   └── FileHelper.php
+│
+├── Traits/
+│   └── ApiResponseTrait.php
+│
+├── Http/
+│   ├── Controllers/
+│   │   ├── Auth/
+│   │   │   └── AuthController.php
+│   │   └── ProductController.php
+│   │
+│   ├── Requests/
+│   │   ├── Auth/
+│   │   │   ├── LoginRequest.php
+│   │   │   └── RegisterRequest.php
+│   │   └── ProductRequest.php
+│   │
+│   └── Resources/
+│       └── ProductResource.php
+│
+├── Services/
+│   ├── Auth/
+│   │   └── AuthService.php
+│   └── ProductService.php
+│
+└── Repositories/
+    ├── Auth/
+    │   └── AuthRepository.php
+    └── ProductRepository.php
 ```
 
 ---
@@ -259,7 +381,7 @@ Repositories/
 Using `ApiResponseTrait`:
 
 ```php
-return $this->apiResponse($data, 'User logged in successfully');
+return $this->apiResponse(['data' => new ProductResource($product), 'message' => 'Created!', 'code' => 201]);
 ```
 
 Response:
@@ -267,9 +389,10 @@ Response:
 ```json
 {
     "status": true,
-    "message": "User logged in successfully",
+    "message": "Created!",
     "data": {
-        "user": {}
+        "id": 1,
+        "name": "Example Product"
     }
 }
 ```
@@ -285,12 +408,15 @@ Response:
 
 ## Roadmap
 
-* Repository scaffolding generator
-* Service generator
-* API resource generator
-* Role & Permission scaffolding
-* API versioning support
-* Swagger documentation generator
+* [x] Repository scaffolding generator
+* [x] Service generator
+* [x] API Resource generator
+* [x] FormRequest generator
+* [x] Magic `--all` full-stack scaffold
+* [ ] Role & Permission scaffolding
+* [ ] API versioning support
+* [ ] Swagger / OpenAPI documentation generator
+* [ ] PHPUnit test generation
 
 ---
 
